@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #080808;
+  --surface: #0F0F0F;
+  --card: #161616;
+  --border: #252525;
+  --muted: #4A4A4A;
+  --dim: #777777;
+  --text: #F0F0F0;
+  --accent: #C8FF00;
+  --accent-dim: #8CAD00;
+  --danger: #FF3333;
+  --success: #00D97E;
+  --blue: #4D9EFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle, #1e1e1e 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type="number"] { -moz-appearance: textfield; }
+
+/* ─── Forge Component Classes ─── */
+
+.forge-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.forge-card-accent {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+
+.forge-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.forge-stat {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.forge-display {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+/* Buttons */
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #080808;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 0.875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.1s;
+  padding: 0.625rem 1.25rem;
+  gap: 0.375rem;
+}
+.btn-accent:hover { background: #d9ff1a; transform: translateY(-1px); }
+.btn-accent:active { transform: translateY(0); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--dim);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  padding: 0.5rem 1rem;
+  gap: 0.375rem;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--danger);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--danger);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  padding: 0.5rem 1rem;
+}
+.btn-danger:hover { background: var(--danger); color: #fff; }
+
+/* Inputs */
+.forge-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.12s;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+.forge-input:focus { border-color: var(--accent); }
+.forge-input::placeholder { color: var(--muted); }
+
+/* Category badge */
+.cat-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid;
+}
+
+.cat-chest    { color: #FF7043; border-color: #FF704340; background: #FF704308; }
+.cat-back     { color: #4D9EFF; border-color: #4D9EFF40; background: #4D9EFF08; }
+.cat-shoulders{ color: #AB47BC; border-color: #AB47BC40; background: #AB47BC08; }
+.cat-arms     { color: #26C6DA; border-color: #26C6DA40; background: #26C6DA08; }
+.cat-legs     { color: #00D97E; border-color: #00D97E40; background: #00D97E08; }
+.cat-core     { color: #FFCA28; border-color: #FFCA2840; background: #FFCA2808; }
+.cat-cardio   { color: #EF5350; border-color: #EF535040; background: #EF535008; }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fadeUp 0.25s ease forwards; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.animate-blink { animation: blink 1.5s ease infinite; }
+
+/* Table */
+.forge-table { width: 100%; border-collapse: collapse; }
+.forge-table th {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.forge-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 0.875rem;
+}
+.forge-table tr:last-child td { border-bottom: none; }
+.forge-table tr:hover td { background: #1a1a1a; }
+
+/* Checkbox */
+.forge-checkbox {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.forge-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.forge-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 0px;
+  width: 5px; height: 9px;
+  border: 2px solid #080808;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* Number stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.stepper-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.stepper-btn:hover { color: var(--text); background: var(--border); }
+.stepper-input {
+  width: 3.5rem;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  outline: none;
+  padding: 0.25rem 0;
+  -moz-appearance: textfield;
+}
