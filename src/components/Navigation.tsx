@@ -30,11 +30,12 @@ const SIDEBAR_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
   },
   {
     view: 'library',
-    label: 'Library',
+    label: 'Exercises',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square">
-        <path d="M4 19V5a2 2 0 0 1 2-2h13" /><path d="M19 19H6a2 2 0 0 0 0 4h13V3" />
-        <line x1="9" y1="7" x2="15" y2="7" /><line x1="9" y1="11" x2="12" y2="11" />
+        <line x1="6" y1="12" x2="18" y2="12" />
+        <line x1="2" y1="9" x2="2" y2="15" /><line x1="6" y1="7" x2="6" y2="17" />
+        <line x1="18" y1="7" x2="18" y2="17" /><line x1="22" y1="9" x2="22" y2="15" />
       </svg>
     ),
   },
