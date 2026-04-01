@@ -53,16 +53,19 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }} onClick={onClose}>
-      <div className="w-full sm:max-w-lg flex flex-col" style={{ maxHeight: '85vh', background: 'var(--card)', border: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h3 className="forge-display text-2xl">ADD EXERCISE</h3>
+    <div className="fixed inset-0 z-[60] flex flex-col justify-end sm:justify-center sm:items-center" style={{ background: 'rgba(0,0,0,0.85)' }} onClick={onClose}>
+      <div className="w-full sm:max-w-lg flex flex-col" style={{ height: '90vh', background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none' }} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div>
+            <h3 className="forge-display text-2xl">ADD EXERCISE</h3>
+            <div className="forge-label" style={{ color: 'var(--muted)' }}>{filtered.length} exercises</div>
+          </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem 0.5rem' }}>✕</button>
         </div>
-        <div className="px-4 pt-3 pb-2">
+        <div className="px-4 pt-3 pb-2 flex-shrink-0">
           <input className="forge-input" placeholder="Search exercises..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
         </div>
-        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto">
+        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto flex-shrink-0">
           {CATS.map(c => (
             <button key={c.id} onClick={() => setCat(c.id)} style={{
               fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.68rem',
@@ -78,13 +81,13 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
             <div className="p-8 text-center forge-label">No exercises found</div>
           ) : filtered.map(ex => (
             <button key={ex.id} onClick={() => { onSelect(ex); onClose(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left"
-              style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text)', minHeight: '52px' }}
+              className="w-full flex items-center gap-3 px-4 text-left"
+              style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text)', minHeight: '44px', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
             >
               <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
               <div className="min-w-0">
                 <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}>{ex.name}</div>
-                <div className="forge-label mt-0.5 truncate">{ex.equipment}</div>
+                <div className="forge-label truncate" style={{ marginTop: '0.1rem' }}>{ex.equipment}</div>
               </div>
             </button>
           ))}
