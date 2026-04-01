@@ -268,39 +268,79 @@ function HistoryRow({ workout, onSelect, onTemplate, onDelete }: {
 
 // ── PR detection ─────────────────────────────────────────────────────────────
 
-function computePRSets(workout: Workout, allWorkouts: Workout[]): Set<string> {
-  const prSets = new Set<string>();
+type PRType = '1rm' | 'weight';
+
+interface PRResult {
+  // set id → which PR types it earned
+  sets: Map<string, PRType[]>;
+  // exercise id → volume PR for this session
+  volumeExercises: Set<string>;
+}
+
+function computePRs(workout: Workout, allWorkouts: Workout[]): PRResult {
+  const sets = new Map<string, PRType[]>();
+  const volumeExercises = new Set<string>();
   const priorWorkouts = allWorkouts.filter(w => w.date < workout.date);
 
   for (const ex of workout.exercises) {
-    // Best e1RM for this exercise across all prior workouts
-    let bestPrior = 0;
+    let bestPrior1RM = 0;
+    let bestPriorWeight = 0;
+    let bestPriorVolume = 0;
+
     for (const prior of priorWorkouts) {
       for (const priorEx of prior.exercises) {
-        if (priorEx.exerciseId === ex.exerciseId) {
-          for (const s of priorEx.sets) {
-            if (s.weight > 0 && s.reps > 0) {
-              bestPrior = Math.max(bestPrior, s.weight * (1 + s.reps / 30));
-            }
+        if (priorEx.exerciseId !== ex.exerciseId) continue;
+        let sessionVol = 0;
+        for (const s of priorEx.sets) {
+          if (s.weight > 0) {
+            bestPriorWeight = Math.max(bestPriorWeight, s.weight);
+            sessionVol += s.weight * s.reps;
+            if (s.reps > 0) bestPrior1RM = Math.max(bestPrior1RM, s.weight * (1 + s.reps / 30));
           }
+        }
+        bestPriorVolume = Math.max(bestPriorVolume, sessionVol);
+      }
+    }
+
+    // Best set in this workout for 1RM and Weight
+    let best1RMId: string | null = null; let best1RM = 0;
+    let bestWeightId: string | null = null; let bestWeight = 0;
+    let thisVolume = 0;
+
+    for (const s of ex.sets) {
+      if (s.weight > 0) {
+        thisVolume += s.weight * s.reps;
+        if (s.weight > bestWeight) { bestWeight = s.weight; bestWeightId = s.id; }
+        if (s.reps > 0) {
+          const e1rm = s.weight * (1 + s.reps / 30);
+          if (e1rm > best1RM) { best1RM = e1rm; best1RMId = s.id; }
         }
       }
     }
 
-    // Best set in this workout for this exercise
-    let bestSetId: string | null = null;
-    let bestE1RM = 0;
-    for (const s of ex.sets) {
-      if (s.weight > 0 && s.reps > 0) {
-        const e1rm = s.weight * (1 + s.reps / 30);
-        if (e1rm > bestE1RM) { bestE1RM = e1rm; bestSetId = s.id; }
-      }
-    }
-
-    if (bestSetId && bestE1RM > bestPrior) prSets.add(bestSetId);
+    const addPR = (id: string, type: PRType) => {
+      sets.set(id, [...(sets.get(id) ?? []), type]);
+    };
+    if (best1RMId && best1RM > bestPrior1RM) addPR(best1RMId, '1rm');
+    if (bestWeightId && bestWeight > bestPriorWeight) addPR(bestWeightId, 'weight');
+    if (thisVolume > 0 && thisVolume > bestPriorVolume) volumeExercises.add(ex.id);
   }
 
-  return prSets;
+  return { sets, volumeExercises };
+}
+
+const PR_LABELS: Record<PRType | 'vol', string> = { '1rm': '1RM', weight: 'WEIGHT', vol: 'VOL' };
+
+function PRBadge({ type }: { type: PRType | 'vol' }) {
+  return (
+    <span style={{
+      fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
+      fontSize: '0.6rem', letterSpacing: '0.1em', color: '#0a0a0a',
+      background: 'var(--accent)', padding: '0.1rem 0.35rem', flexShrink: 0,
+    }}>
+      {PR_LABELS[type]}
+    </span>
+  );
 }
 
 // ── Workout detail view ───────────────────────────────────────────────────────
@@ -317,7 +357,8 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
   const date = new Date(workout.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const prSets = computePRSets(workout, allWorkouts);
+  const { sets: prSets, volumeExercises } = computePRs(workout, allWorkouts);
+  const totalPRs = [...prSets.values()].reduce((n, types) => n + types.length, 0) + volumeExercises.size;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up" style={{ maxWidth: '720px' }}>
@@ -346,7 +387,7 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
             { label: 'Duration',  value: `${workout.duration}`,               unit: 'min'   },
             { label: 'Volume',    value: fmtVol(vol),                          unit: 'lbs'   },
             { label: 'Exercises', value: workout.exercises.length.toString(),  unit: 'total' },
-            ...(prSets.size > 0 ? [{ label: 'PRs', value: prSets.size.toString(), unit: 'set' + (prSets.size !== 1 ? 's' : '') }] : []),
+            ...(totalPRs > 0 ? [{ label: 'PRs', value: totalPRs.toString(), unit: totalPRs !== 1 ? 'records' : 'record' }] : []),
           ].map(s => (
             <div key={s.label}>
               <div className="forge-label mb-0.5" style={s.label === 'PRs' ? { color: 'var(--accent)' } : undefined}>{s.label}</div>
@@ -360,27 +401,27 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
       {/* Exercises */}
       <div className="flex flex-col gap-4 mb-6">
         {workout.exercises.map(ex => {
-          const exHasPR = ex.sets.some(s => prSets.has(s.id));
+          const hasVolPR = volumeExercises.has(ex.id);
+          const hasSetPR = ex.sets.some(s => prSets.has(s.id));
+          const hasAnyPR = hasVolPR || hasSetPR;
           return (
-            <div key={ex.id} className="forge-card" style={exHasPR ? { borderLeft: '3px solid var(--accent)' } : undefined}>
+            <div key={ex.id} className="forge-card" style={hasAnyPR ? { borderLeft: '3px solid var(--accent)' } : undefined}>
               {/* Exercise header */}
               <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
                 <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
                 <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '1rem' }}>
                   {ex.exerciseName}
                 </span>
-                {exHasPR && (
-                  <span style={{
-                    marginLeft: 'auto', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
-                    fontSize: '0.65rem', letterSpacing: '0.12em', color: '#0a0a0a',
-                    background: 'var(--accent)', padding: '0.1rem 0.4rem', flexShrink: 0,
-                  }}>PR</span>
+                {hasVolPR && (
+                  <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                    <PRBadge type="vol" />
+                  </span>
                 )}
               </div>
 
               {/* Sets */}
               <div className="overflow-x-auto">
-                <table className="forge-table" style={{ minWidth: '280px' }}>
+                <table className="forge-table" style={{ minWidth: '300px' }}>
                   <thead>
                     <tr>
                       <th style={{ width: '2rem' }}>#</th>
@@ -394,29 +435,27 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
                       const e1rm = s.weight > 0 && s.reps > 0
                         ? Math.round(s.weight * (1 + s.reps / 30))
                         : null;
-                      const isPR = prSets.has(s.id);
+                      const setPRTypes = prSets.get(s.id) ?? [];
+                      const isWeightPR = setPRTypes.includes('weight');
+                      const is1RMPR = setPRTypes.includes('1rm');
+                      const rowHighlight = setPRTypes.length > 0;
                       return (
-                        <tr key={s.id} style={isPR ? { background: 'rgba(200,255,0,0.05)' } : undefined}>
+                        <tr key={s.id} style={rowHighlight ? { background: 'rgba(200,255,0,0.05)' } : undefined}>
                           <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{i + 1}</span></td>
                           <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
-                            {s.weight > 0 ? `${s.weight} lbs` : '—'}
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              {s.weight > 0 ? `${s.weight} lbs` : '—'}
+                              {isWeightPR && <PRBadge type="weight" />}
+                            </span>
                           </td>
                           <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
                             {s.reps}
                           </td>
-                          <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
-                            {e1rm ? (
-                              <span style={{ color: isPR ? 'var(--accent)' : 'var(--accent)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                {e1rm} lbs
-                                {isPR && (
-                                  <span style={{
-                                    fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
-                                    fontSize: '0.6rem', letterSpacing: '0.1em', color: '#0a0a0a',
-                                    background: 'var(--accent)', padding: '0.05rem 0.3rem',
-                                  }}>PR</span>
-                                )}
-                              </span>
-                            ) : <span style={{ color: 'var(--border)' }}>—</span>}
+                          <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: e1rm ? 'var(--accent)' : 'var(--border)' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              {e1rm ? `${e1rm} lbs` : '—'}
+                              {is1RMPR && <PRBadge type="1rm" />}
+                            </span>
                           </td>
                         </tr>
                       );
