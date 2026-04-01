@@ -268,49 +268,39 @@ function HistoryRow({ workout, onSelect, onTemplate, onDelete }: {
 
 // ── PR detection ─────────────────────────────────────────────────────────────
 
-type PRType = '1rm' | 'weight';
+type PRType = '1rm' | 'weight' | 'vol';
 
-interface PRResult {
-  // set id → which PR types it earned
-  sets: Map<string, PRType[]>;
-  // exercise id → volume PR for this session
-  volumeExercises: Set<string>;
-}
-
-function computePRs(workout: Workout, allWorkouts: Workout[]): PRResult {
+function computePRs(workout: Workout, allWorkouts: Workout[]): Map<string, PRType[]> {
   const sets = new Map<string, PRType[]>();
-  const volumeExercises = new Set<string>();
   const priorWorkouts = allWorkouts.filter(w => w.date < workout.date);
 
   for (const ex of workout.exercises) {
     let bestPrior1RM = 0;
     let bestPriorWeight = 0;
-    let bestPriorVolume = 0;
+    let bestPriorVol = 0;
 
     for (const prior of priorWorkouts) {
       for (const priorEx of prior.exercises) {
         if (priorEx.exerciseId !== ex.exerciseId) continue;
-        let sessionVol = 0;
         for (const s of priorEx.sets) {
           if (s.weight > 0) {
             bestPriorWeight = Math.max(bestPriorWeight, s.weight);
-            sessionVol += s.weight * s.reps;
+            bestPriorVol = Math.max(bestPriorVol, s.weight * s.reps);
             if (s.reps > 0) bestPrior1RM = Math.max(bestPrior1RM, s.weight * (1 + s.reps / 30));
           }
         }
-        bestPriorVolume = Math.max(bestPriorVolume, sessionVol);
       }
     }
 
-    // Best set in this workout for 1RM and Weight
     let best1RMId: string | null = null; let best1RM = 0;
     let bestWeightId: string | null = null; let bestWeight = 0;
-    let thisVolume = 0;
+    let bestVolId: string | null = null; let bestVol = 0;
 
     for (const s of ex.sets) {
       if (s.weight > 0) {
-        thisVolume += s.weight * s.reps;
         if (s.weight > bestWeight) { bestWeight = s.weight; bestWeightId = s.id; }
+        const sv = s.weight * s.reps;
+        if (sv > bestVol) { bestVol = sv; bestVolId = s.id; }
         if (s.reps > 0) {
           const e1rm = s.weight * (1 + s.reps / 30);
           if (e1rm > best1RM) { best1RM = e1rm; best1RMId = s.id; }
@@ -318,15 +308,13 @@ function computePRs(workout: Workout, allWorkouts: Workout[]): PRResult {
       }
     }
 
-    const addPR = (id: string, type: PRType) => {
-      sets.set(id, [...(sets.get(id) ?? []), type]);
-    };
+    const addPR = (id: string, type: PRType) => sets.set(id, [...(sets.get(id) ?? []), type]);
     if (best1RMId && best1RM > bestPrior1RM) addPR(best1RMId, '1rm');
     if (bestWeightId && bestWeight > bestPriorWeight) addPR(bestWeightId, 'weight');
-    if (thisVolume > 0 && thisVolume > bestPriorVolume) volumeExercises.add(ex.id);
+    if (bestVolId && bestVol > bestPriorVol) addPR(bestVolId, 'vol');
   }
 
-  return { sets, volumeExercises };
+  return sets;
 }
 
 const PR_LABELS: Record<PRType | 'vol', string> = { '1rm': '1RM', weight: 'WEIGHT', vol: 'VOL' };
@@ -357,8 +345,8 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
   const date = new Date(workout.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const { sets: prSets, volumeExercises } = computePRs(workout, allWorkouts);
-  const totalPRs = [...prSets.values()].reduce((n, types) => n + types.length, 0) + volumeExercises.size;
+  const prSets = computePRs(workout, allWorkouts);
+  const totalPRs = [...prSets.values()].reduce((n, types) => n + types.length, 0);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up" style={{ maxWidth: '720px' }}>
@@ -401,9 +389,7 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
       {/* Exercises */}
       <div className="flex flex-col gap-4 mb-6">
         {workout.exercises.map(ex => {
-          const hasVolPR = volumeExercises.has(ex.id);
-          const hasSetPR = ex.sets.some(s => prSets.has(s.id));
-          const hasAnyPR = hasVolPR || hasSetPR;
+          const hasAnyPR = ex.sets.some(s => prSets.has(s.id));
           return (
             <div key={ex.id} className="forge-card" style={hasAnyPR ? { borderLeft: '3px solid var(--accent)' } : undefined}>
               {/* Exercise header */}
@@ -412,11 +398,6 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
                 <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '1rem' }}>
                   {ex.exerciseName}
                 </span>
-                {hasVolPR && (
-                  <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
-                    <PRBadge type="vol" />
-                  </span>
-                )}
               </div>
 
               {/* Sets */}
@@ -438,6 +419,7 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
                       const setPRTypes = prSets.get(s.id) ?? [];
                       const isWeightPR = setPRTypes.includes('weight');
                       const is1RMPR = setPRTypes.includes('1rm');
+                      const isVolPR = setPRTypes.includes('vol');
                       const rowHighlight = setPRTypes.length > 0;
                       return (
                         <tr key={s.id} style={rowHighlight ? { background: 'rgba(200,255,0,0.05)' } : undefined}>
@@ -446,6 +428,7 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               {s.weight > 0 ? `${s.weight} lbs` : '—'}
                               {isWeightPR && <PRBadge type="weight" />}
+                              {isVolPR && <PRBadge type="vol" />}
                             </span>
                           </td>
                           <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
