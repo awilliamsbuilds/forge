@@ -4,11 +4,11 @@ interface NavProps {
   currentView: View;
   onNavigate: (v: View) => void;
   hasActiveWorkout: boolean;
-  isOpen: boolean;
-  onClose: () => void;
 }
 
-const NAV_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
+// ── Desktop sidebar items (all 5 views) ───────────────────────────────────────
+
+const SIDEBAR_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
   {
     view: 'dashboard',
     label: 'Dashboard',
@@ -58,28 +58,26 @@ const NAV_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
   },
 ];
 
-export default function Navigation({ currentView, onNavigate, hasActiveWorkout, isOpen, onClose }: NavProps) {
+// ── Mobile bottom nav items (flanking the center START button) ─────────────────
+// Left: History, Library   Right: Progress, Records
+
+const BOTTOM_LEFT: (typeof SIDEBAR_ITEMS[number])[] = SIDEBAR_ITEMS.filter(i => i.view === 'log' || i.view === 'library');
+const BOTTOM_RIGHT: (typeof SIDEBAR_ITEMS[number])[] = SIDEBAR_ITEMS.filter(i => i.view === 'progress' || i.view === 'records');
+
+export default function Navigation({ currentView, onNavigate, hasActiveWorkout }: NavProps) {
   return (
-    <aside
-      className={[
-        'fixed top-0 left-0 h-full z-50 flex flex-col',
-        'transition-transform duration-[250ms] ease-in-out',
-        // Mobile: slide in/out. Desktop: always visible.
-        isOpen ? 'translate-x-0' : '-translate-x-full',
-        'lg:translate-x-0',
-      ].join(' ')}
-      style={{
-        width: '220px',
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
-      }}
-    >
-      {/* Logo + close button */}
-      <div
-        className="px-6 pt-7 pb-6 flex items-start justify-between"
-        style={{ borderBottom: '1px solid var(--border)' }}
+    <>
+      {/* ── Desktop sidebar ──────────────────────────────────────────────────── */}
+      <aside
+        className="hidden lg:flex fixed top-0 left-0 h-full z-50 flex-col"
+        style={{
+          width: '220px',
+          background: 'var(--surface)',
+          borderRight: '1px solid var(--border)',
+        }}
       >
-        <div>
+        {/* Logo */}
+        <div className="px-6 pt-7 pb-6" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="forge-display text-4xl" style={{ color: 'var(--accent)', letterSpacing: '0.08em' }}>
             FORGE
           </div>
@@ -87,69 +85,153 @@ export default function Navigation({ currentView, onNavigate, hasActiveWorkout, 
             Performance Tracker
           </div>
         </div>
-        {/* Close button — only visible/useful on mobile */}
-        <button
-          onClick={onClose}
-          className="lg:hidden mt-1"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--muted)',
-            cursor: 'pointer',
-            fontSize: '1.1rem',
-            padding: '0.25rem',
-          }}
-          aria-label="Close menu"
-        >
-          ✕
-        </button>
-      </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        {NAV_ITEMS.map(item => {
+        {/* Nav items */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          {SIDEBAR_ITEMS.map(item => {
+            const active = currentView === item.view;
+            return (
+              <button
+                key={item.view}
+                onClick={() => onNavigate(item.view)}
+                className="w-full flex items-center gap-3 px-6 py-3 text-left transition-all"
+                style={{
+                  color: active ? 'var(--accent)' : 'var(--dim)',
+                  background: active ? 'rgba(200,255,0,0.06)' : 'transparent',
+                  borderLeft: active ? '3px solid var(--accent)' : '3px solid transparent',
+                  borderTop: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
+                  fontFamily: 'Barlow Condensed, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ color: active ? 'var(--accent)' : 'var(--muted)', flexShrink: 0 }}>
+                  {item.icon}
+                </span>
+                {item.label}
+                {item.view === 'log' && hasActiveWorkout && (
+                  <span
+                    className="ml-auto w-2 h-2 rounded-full animate-blink"
+                    style={{ background: 'var(--accent)', flexShrink: 0 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="px-6 py-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="forge-label" style={{ color: 'var(--muted)' }}>
+            Data stored locally
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Mobile bottom nav ────────────────────────────────────────────────── */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center"
+        style={{
+          height: '64px',
+          background: 'var(--surface)',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        {/* Left items */}
+        {BOTTOM_LEFT.map(item => {
           const active = currentView === item.view;
           return (
             <button
               key={item.view}
               onClick={() => onNavigate(item.view)}
-              className="w-full flex items-center gap-3 px-6 py-3 text-left transition-all"
+              className="flex-1 flex flex-col items-center justify-center gap-1 h-full relative"
               style={{
-                color: active ? 'var(--accent)' : 'var(--dim)',
-                background: active ? 'rgba(200,255,0,0.06)' : 'transparent',
-                borderLeft: active ? '3px solid var(--accent)' : '3px solid transparent',
-                borderTop: 'none',
-                borderRight: 'none',
-                borderBottom: 'none',
-                fontFamily: 'Barlow Condensed, sans-serif',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
+                background: 'none',
+                border: 'none',
+                color: active ? 'var(--accent)' : 'var(--muted)',
                 cursor: 'pointer',
               }}
             >
-              <span style={{ color: active ? 'var(--accent)' : 'var(--muted)', flexShrink: 0 }}>
-                {item.icon}
+              {item.icon}
+              <span style={{
+                fontFamily: 'Barlow Condensed, sans-serif',
+                fontWeight: 700,
+                fontSize: '0.6rem',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>
+                {item.label}
               </span>
-              {item.label}
               {item.view === 'log' && hasActiveWorkout && (
                 <span
-                  className="ml-auto w-2 h-2 rounded-full animate-blink"
-                  style={{ background: 'var(--accent)', flexShrink: 0 }}
+                  className="absolute top-2 right-[calc(50%-14px)] w-1.5 h-1.5 rounded-full animate-blink"
+                  style={{ background: 'var(--accent)' }}
                 />
               )}
             </button>
           );
         })}
-      </nav>
 
-      {/* Footer */}
-      <div className="px-6 py-4" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="forge-label" style={{ color: 'var(--muted)' }}>
-          Data stored locally
+        {/* Center START button */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '72px' }}>
+          <button
+            onClick={() => onNavigate('dashboard')}
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: currentView === 'dashboard' ? 'var(--accent)' : 'rgba(200,255,0,0.12)',
+              border: `2px solid ${currentView === 'dashboard' ? 'var(--accent)' : 'rgba(200,255,0,0.4)'}`,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: currentView === 'dashboard' ? '#0a0a0a' : 'var(--accent)',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            aria-label="Start workout"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Right items */}
+        {BOTTOM_RIGHT.map(item => {
+          const active = currentView === item.view;
+          return (
+            <button
+              key={item.view}
+              onClick={() => onNavigate(item.view)}
+              className="flex-1 flex flex-col items-center justify-center gap-1 h-full"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: active ? 'var(--accent)' : 'var(--muted)',
+                cursor: 'pointer',
+              }}
+            >
+              {item.icon}
+              <span style={{
+                fontFamily: 'Barlow Condensed, sans-serif',
+                fontWeight: 700,
+                fontSize: '0.6rem',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 }
