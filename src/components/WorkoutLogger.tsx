@@ -266,10 +266,48 @@ function HistoryRow({ workout, onSelect, onTemplate, onDelete }: {
   );
 }
 
+// ── PR detection ─────────────────────────────────────────────────────────────
+
+function computePRSets(workout: Workout, allWorkouts: Workout[]): Set<string> {
+  const prSets = new Set<string>();
+  const priorWorkouts = allWorkouts.filter(w => w.date < workout.date);
+
+  for (const ex of workout.exercises) {
+    // Best e1RM for this exercise across all prior workouts
+    let bestPrior = 0;
+    for (const prior of priorWorkouts) {
+      for (const priorEx of prior.exercises) {
+        if (priorEx.exerciseId === ex.exerciseId) {
+          for (const s of priorEx.sets) {
+            if (s.weight > 0 && s.reps > 0) {
+              bestPrior = Math.max(bestPrior, s.weight * (1 + s.reps / 30));
+            }
+          }
+        }
+      }
+    }
+
+    // Best set in this workout for this exercise
+    let bestSetId: string | null = null;
+    let bestE1RM = 0;
+    for (const s of ex.sets) {
+      if (s.weight > 0 && s.reps > 0) {
+        const e1rm = s.weight * (1 + s.reps / 30);
+        if (e1rm > bestE1RM) { bestE1RM = e1rm; bestSetId = s.id; }
+      }
+    }
+
+    if (bestSetId && bestE1RM > bestPrior) prSets.add(bestSetId);
+  }
+
+  return prSets;
+}
+
 // ── Workout detail view ───────────────────────────────────────────────────────
 
-function WorkoutDetail({ workout, onBack, onRepeat, onDelete }: {
+function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
   workout: Workout;
+  allWorkouts: Workout[];
   onBack: () => void;
   onRepeat: (w: Workout) => void;
   onDelete: (id: string) => void;
@@ -279,6 +317,7 @@ function WorkoutDetail({ workout, onBack, onRepeat, onDelete }: {
   const date = new Date(workout.date);
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const prSets = computePRSets(workout, allWorkouts);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up" style={{ maxWidth: '720px' }}>
@@ -304,13 +343,14 @@ function WorkoutDetail({ workout, onBack, onRepeat, onDelete }: {
         {/* Stats row */}
         <div className="flex gap-5 mt-4 flex-wrap">
           {[
-            { label: 'Duration', value: `${workout.duration}`, unit: 'min' },
-            { label: 'Volume',   value: fmtVol(vol),            unit: 'lbs' },
-            { label: 'Exercises', value: workout.exercises.length.toString(), unit: 'total' },
+            { label: 'Duration',  value: `${workout.duration}`,               unit: 'min'   },
+            { label: 'Volume',    value: fmtVol(vol),                          unit: 'lbs'   },
+            { label: 'Exercises', value: workout.exercises.length.toString(),  unit: 'total' },
+            ...(prSets.size > 0 ? [{ label: 'PRs', value: prSets.size.toString(), unit: 'set' + (prSets.size !== 1 ? 's' : '') }] : []),
           ].map(s => (
             <div key={s.label}>
-              <div className="forge-label mb-0.5">{s.label}</div>
-              <span className="forge-stat text-xl">{s.value}</span>
+              <div className="forge-label mb-0.5" style={s.label === 'PRs' ? { color: 'var(--accent)' } : undefined}>{s.label}</div>
+              <span className="forge-stat text-xl" style={s.label === 'PRs' ? { color: 'var(--accent)' } : undefined}>{s.value}</span>
               <span className="forge-label ml-1">{s.unit}</span>
             </div>
           ))}
@@ -319,52 +359,74 @@ function WorkoutDetail({ workout, onBack, onRepeat, onDelete }: {
 
       {/* Exercises */}
       <div className="flex flex-col gap-4 mb-6">
-        {workout.exercises.map(ex => (
-          <div key={ex.id} className="forge-card">
-            {/* Exercise header */}
-            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-              <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
-              <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '1rem' }}>
-                {ex.exerciseName}
-              </span>
-            </div>
+        {workout.exercises.map(ex => {
+          const exHasPR = ex.sets.some(s => prSets.has(s.id));
+          return (
+            <div key={ex.id} className="forge-card" style={exHasPR ? { borderLeft: '3px solid var(--accent)' } : undefined}>
+              {/* Exercise header */}
+              <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
+                <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '1rem' }}>
+                  {ex.exerciseName}
+                </span>
+                {exHasPR && (
+                  <span style={{
+                    marginLeft: 'auto', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
+                    fontSize: '0.65rem', letterSpacing: '0.12em', color: '#0a0a0a',
+                    background: 'var(--accent)', padding: '0.1rem 0.4rem', flexShrink: 0,
+                  }}>PR</span>
+                )}
+              </div>
 
-            {/* Sets */}
-            <div className="overflow-x-auto">
-              <table className="forge-table" style={{ minWidth: '280px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ width: '2rem' }}>#</th>
-                    <th>Weight</th>
-                    <th>Reps</th>
-                    <th>Est. 1RM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ex.sets.map((s, i) => {
-                    const e1rm = s.weight > 0 && s.reps > 0
-                      ? Math.round(s.weight * (1 + s.reps / 30))
-                      : null;
-                    return (
-                      <tr key={s.id}>
-                        <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{i + 1}</span></td>
-                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
-                          {s.weight > 0 ? `${s.weight} lbs` : '—'}
-                        </td>
-                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
-                          {s.reps}
-                        </td>
-                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: e1rm ? 'var(--accent)' : 'var(--border)' }}>
-                          {e1rm ? `${e1rm} lbs` : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Sets */}
+              <div className="overflow-x-auto">
+                <table className="forge-table" style={{ minWidth: '280px' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '2rem' }}>#</th>
+                      <th>Weight</th>
+                      <th>Reps</th>
+                      <th>Est. 1RM</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ex.sets.map((s, i) => {
+                      const e1rm = s.weight > 0 && s.reps > 0
+                        ? Math.round(s.weight * (1 + s.reps / 30))
+                        : null;
+                      const isPR = prSets.has(s.id);
+                      return (
+                        <tr key={s.id} style={isPR ? { background: 'rgba(200,255,0,0.05)' } : undefined}>
+                          <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{i + 1}</span></td>
+                          <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
+                            {s.weight > 0 ? `${s.weight} lbs` : '—'}
+                          </td>
+                          <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
+                            {s.reps}
+                          </td>
+                          <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
+                            {e1rm ? (
+                              <span style={{ color: isPR ? 'var(--accent)' : 'var(--accent)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                {e1rm} lbs
+                                {isPR && (
+                                  <span style={{
+                                    fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
+                                    fontSize: '0.6rem', letterSpacing: '0.1em', color: '#0a0a0a',
+                                    background: 'var(--accent)', padding: '0.05rem 0.3rem',
+                                  }}>PR</span>
+                                )}
+                              </span>
+                            ) : <span style={{ color: 'var(--border)' }}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Actions */}
@@ -403,6 +465,7 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
     return (
       <WorkoutDetail
         workout={live ?? selected}
+        allWorkouts={workouts}
         onBack={() => setSelected(null)}
         onRepeat={w => { onTemplate(w); setSelected(null); }}
         onDelete={id => { onDelete(id); setSelected(null); }}
