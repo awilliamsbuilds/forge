@@ -30,7 +30,7 @@ function MiniHeatmap({ workouts }: { workouts: Workout[] }) {
   const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const LABEL_H = 16;
   const SVG_W = 7 * STRIDE - GAP;
-  const SVG_H = 4 * STRIDE - GAP + LABEL_H;
+  const SVG_H = 3 * STRIDE - GAP + LABEL_H;
 
   const cells = useMemo(() => {
     const today = new Date();
@@ -38,9 +38,9 @@ function MiniHeatmap({ workouts }: { workouts: Workout[] }) {
     const startOfCurrentWeek = new Date(today);
     startOfCurrentWeek.setDate(today.getDate() - today.getDay());
     const startDate = new Date(startOfCurrentWeek);
-    startDate.setDate(startOfCurrentWeek.getDate() - 21);
+    startDate.setDate(startOfCurrentWeek.getDate() - 14);
 
-    return Array.from({ length: 28 }, (_, i) => {
+    return Array.from({ length: 21 }, (_, i) => {
       const row = Math.floor(i / 7);
       const col = i % 7;
       const d = new Date(startDate);
