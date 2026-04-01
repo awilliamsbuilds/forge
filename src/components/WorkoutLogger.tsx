@@ -90,7 +90,7 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
         style={{
           position: 'fixed', zIndex: 61,
           top: '10vh', left: '50%', transform: 'translateX(-50%)',
-          width: 'min(520px, 100vw)', height: '88vh',
+          width: 'min(520px, 100vw)', height: 'calc(90vh - 64px)',
           background: 'var(--card)', border: '1px solid var(--border)',
           display: 'flex', flexDirection: 'column',
         }}
