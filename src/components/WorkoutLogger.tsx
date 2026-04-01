@@ -194,8 +194,9 @@ const fmtDate = (iso: string) => {
 
 // ── Workout history row ───────────────────────────────────────────────────────
 
-function HistoryRow({ workout, onTemplate, onDelete }: {
+function HistoryRow({ workout, onSelect, onTemplate, onDelete }: {
   workout: Workout;
+  onSelect: (w: Workout) => void;
   onTemplate: (w: Workout) => void;
   onDelete: (id: string) => void;
 }) {
@@ -204,28 +205,21 @@ function HistoryRow({ workout, onTemplate, onDelete }: {
 
   if (confirming) {
     return (
-      <div
-        className="forge-card flex items-center justify-between gap-3 p-3 sm:p-4"
-        style={{ borderLeft: '3px solid var(--danger)' }}
-      >
+      <div className="forge-card flex items-center justify-between gap-3 p-3 sm:p-4" style={{ borderLeft: '3px solid var(--danger)' }}>
         <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.9rem', color: 'var(--dim)' }}>
           Delete &ldquo;{workout.name}&rdquo;?
         </span>
         <div className="flex gap-2 flex-shrink-0">
-          <button className="btn-ghost py-1.5 px-3" style={{ fontSize: '0.75rem' }} onClick={() => setConfirming(false)}>
-            Cancel
-          </button>
-          <button className="btn-danger py-1.5 px-3" style={{ fontSize: '0.75rem' }} onClick={() => onDelete(workout.id)}>
-            Delete
-          </button>
+          <button className="btn-ghost py-1.5 px-3" style={{ fontSize: '0.75rem' }} onClick={() => setConfirming(false)}>Cancel</button>
+          <button className="btn-danger py-1.5 px-3" style={{ fontSize: '0.75rem' }} onClick={() => onDelete(workout.id)}>Delete</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="forge-card flex items-center gap-3 p-3 sm:p-4">
-      {/* Main info */}
+    <div className="forge-card flex items-center gap-3 p-3 sm:p-4" style={{ cursor: 'pointer' }} onClick={() => onSelect(workout)}>
+      {/* Main info — clickable */}
       <div className="flex-1 min-w-0">
         <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.03em' }}>
           {workout.name}
@@ -249,7 +243,7 @@ function HistoryRow({ workout, onTemplate, onDelete }: {
       <button
         className="btn-ghost py-1.5 px-3 flex-shrink-0"
         style={{ fontSize: '0.72rem' }}
-        onClick={() => onTemplate(workout)}
+        onClick={e => { e.stopPropagation(); onTemplate(workout); }}
         title="Repeat this workout"
       >
         Repeat
@@ -257,23 +251,139 @@ function HistoryRow({ workout, onTemplate, onDelete }: {
 
       {/* Delete */}
       <button
-        onClick={() => setConfirming(true)}
+        onClick={e => { e.stopPropagation(); setConfirming(true); }}
         title="Delete workout"
-        style={{
-          background: 'none', border: 'none', color: 'var(--muted)',
-          cursor: 'pointer', padding: '0.25rem 0.375rem', flexShrink: 0,
-          display: 'flex', alignItems: 'center', transition: 'color 0.1s',
-        }}
+        style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0.25rem 0.375rem', flexShrink: 0, display: 'flex', alignItems: 'center', transition: 'color 0.1s' }}
         onMouseEnter={e => (e.currentTarget.style.color = 'var(--danger)')}
         onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square">
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6l-1 14H6L5 6" />
-          <path d="M10 11v6M14 11v6" />
-          <path d="M9 6V4h6v2" />
+          <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
         </svg>
       </button>
+    </div>
+  );
+}
+
+// ── Workout detail view ───────────────────────────────────────────────────────
+
+function WorkoutDetail({ workout, onBack, onRepeat, onDelete }: {
+  workout: Workout;
+  onBack: () => void;
+  onRepeat: (w: Workout) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const vol = workoutVolume(workout);
+  const date = new Date(workout.date);
+  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-up" style={{ maxWidth: '720px' }}>
+      {/* Back */}
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 mb-5 forge-label"
+        style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 0, letterSpacing: '0.08em' }}
+        onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+        onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        HISTORY
+      </button>
+
+      {/* Header */}
+      <div className="mb-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+        <h1 className="forge-display text-4xl sm:text-5xl mb-2">{workout.name.toUpperCase()}</h1>
+        <div className="forge-label" style={{ color: 'var(--dim)' }}>{dateStr} · {timeStr}</div>
+
+        {/* Stats row */}
+        <div className="flex gap-5 mt-4 flex-wrap">
+          {[
+            { label: 'Duration', value: `${workout.duration}`, unit: 'min' },
+            { label: 'Volume',   value: fmtVol(vol),            unit: 'lbs' },
+            { label: 'Exercises', value: workout.exercises.length.toString(), unit: 'total' },
+          ].map(s => (
+            <div key={s.label}>
+              <div className="forge-label mb-0.5">{s.label}</div>
+              <span className="forge-stat text-xl">{s.value}</span>
+              <span className="forge-label ml-1">{s.unit}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Exercises */}
+      <div className="flex flex-col gap-4 mb-6">
+        {workout.exercises.map(ex => (
+          <div key={ex.id} className="forge-card">
+            {/* Exercise header */}
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
+              <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '1rem' }}>
+                {ex.exerciseName}
+              </span>
+            </div>
+
+            {/* Sets */}
+            <div className="overflow-x-auto">
+              <table className="forge-table" style={{ minWidth: '280px' }}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '2rem' }}>#</th>
+                    <th>Weight</th>
+                    <th>Reps</th>
+                    <th>Est. 1RM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ex.sets.map((s, i) => {
+                    const e1rm = s.weight > 0 && s.reps > 0
+                      ? Math.round(s.weight * (1 + s.reps / 30))
+                      : null;
+                    return (
+                      <tr key={s.id}>
+                        <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{i + 1}</span></td>
+                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
+                          {s.weight > 0 ? `${s.weight} lbs` : '—'}
+                        </td>
+                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem' }}>
+                          {s.reps}
+                        </td>
+                        <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: e1rm ? 'var(--accent)' : 'var(--border)' }}>
+                          {e1rm ? `${e1rm} lbs` : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      {confirming ? (
+        <div className="flex items-center justify-between gap-3 p-4 forge-card" style={{ borderLeft: '3px solid var(--danger)' }}>
+          <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.9rem', color: 'var(--dim)' }}>
+            Delete this workout?
+          </span>
+          <div className="flex gap-2">
+            <button className="btn-ghost py-2 px-4" style={{ fontSize: '0.75rem' }} onClick={() => setConfirming(false)}>Cancel</button>
+            <button className="btn-danger py-2 px-4" style={{ fontSize: '0.75rem' }} onClick={() => { onDelete(workout.id); onBack(); }}>Delete</button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button className="btn-accent flex-1 py-3" onClick={() => onRepeat(workout)}>Repeat Workout</button>
+          <button className="btn-danger py-3 px-5" onClick={() => setConfirming(true)}>Delete</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -285,6 +395,21 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
   onTemplate: (w: Workout) => void;
   onDelete: (id: string) => void;
 }) {
+  const [selected, setSelected] = useState<Workout | null>(null);
+
+  if (selected) {
+    // Check the workout still exists (might have been deleted)
+    const live = workouts.find(w => w.id === selected.id);
+    return (
+      <WorkoutDetail
+        workout={live ?? selected}
+        onBack={() => setSelected(null)}
+        onRepeat={w => { onTemplate(w); setSelected(null); }}
+        onDelete={id => { onDelete(id); setSelected(null); }}
+      />
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
       <div className="mb-6">
@@ -301,7 +426,7 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <span className="forge-label">{workouts.length} sessions</span>
           </div>
           <div className="flex flex-col gap-2">
@@ -309,6 +434,7 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
               <HistoryRow
                 key={w.id}
                 workout={w}
+                onSelect={setSelected}
                 onTemplate={onTemplate}
                 onDelete={onDelete}
               />
