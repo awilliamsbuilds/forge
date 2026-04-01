@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View } from './types';
 import { useWorkouts } from './hooks/useWorkouts';
 import Navigation from './components/Navigation';
@@ -8,11 +8,27 @@ import ExerciseLibrary from './components/ExerciseLibrary';
 import ProgressCharts from './components/ProgressCharts';
 import PersonalRecords from './components/PersonalRecords';
 
+const VIEWS: View[] = ['dashboard', 'log', 'library', 'progress', 'records'];
+
+function hashToView(hash: string): View {
+  const v = hash.replace('#', '') as View;
+  return VIEWS.includes(v) ? v : 'dashboard';
+}
+
 export default function App() {
-  const [view, setView] = useState<View>('dashboard');
+  const [view, setView] = useState<View>(() => hashToView(window.location.hash));
   const store = useWorkouts();
 
-  const navigate = (v: View) => setView(v);
+  useEffect(() => {
+    const onPop = () => setView(hashToView(window.location.hash));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const navigate = (v: View) => {
+    window.location.hash = v;
+    setView(v);
+  };
 
   return (
     <div style={{ minHeight: '100vh' }}>
