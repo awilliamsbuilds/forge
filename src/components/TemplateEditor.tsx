@@ -53,8 +53,8 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
   });
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end sm:justify-center sm:items-center" style={{ background: 'rgba(0,0,0,0.85)' }} onClick={onClose}>
-      <div className="w-full sm:max-w-lg flex flex-col" style={{ height: '90vh', background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none' }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(0,0,0,0.85)' }} onClick={onClose}>
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col" style={{ height: '90vh', background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
           <div>
             <h3 className="forge-display text-2xl">ADD EXERCISE</h3>

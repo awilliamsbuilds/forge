@@ -82,12 +82,12 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col justify-end sm:justify-center sm:items-center"
+      className="fixed inset-0 z-[60]"
       style={{ background: 'rgba(0,0,0,0.85)' }}
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-lg flex flex-col"
+        className="absolute bottom-0 left-0 right-0 flex flex-col"
         style={{
           height: '90vh',
           background: 'var(--card)',
