@@ -550,45 +550,28 @@ function TemplatesSection({ templates, workouts, onStart, onEdit, onDelete }: {
 
 // ── Log screen (no active workout): templates + history ──────────────────────
 
-function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onStartGoalTemplate, onSaveTemplate, onDeleteTemplate }: {
+function StartScreen({ workouts, onTemplate, onDelete }: {
   workouts: Workout[];
-  templates: WorkoutTemplate[];
-  onStart: (name: string) => void;
   onTemplate: (w: Workout) => void;
   onDelete: (id: string) => void;
-  onStartGoalTemplate: (t: WorkoutTemplate) => void;
-  onSaveTemplate: (t: WorkoutTemplate) => void;
-  onDeleteTemplate: (id: string) => void;
 }) {
-  const [editing, setEditing] = useState<WorkoutTemplate | null>(null);
-
-  if (editing) {
-    return (
-      <TemplateEditor
-        initial={editing}
-        onSave={t => { onSaveTemplate(t); setEditing(null); }}
-        onCancel={() => setEditing(null)}
-      />
-    );
-  }
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
-      {/* Templates section with edit/delete affordance */}
-      <TemplatesSection
-        templates={templates}
-        workouts={workouts}
-        onStart={t => { onStartGoalTemplate(t); }}
-        onEdit={setEditing}
-        onDelete={onDeleteTemplate}
-      />
+      <div className="mb-6">
+        <div className="forge-label mb-1">Your training log</div>
+        <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl">HISTORY</h1>
+      </div>
 
-      {/* Workout history */}
-      {workouts.length > 0 && (
+      {workouts.length === 0 ? (
+        <div className="p-10 text-center" style={{ border: '1px dashed var(--border)' }}>
+          <div className="forge-display text-3xl mb-2" style={{ color: 'var(--border)' }}>NO HISTORY YET</div>
+          <p style={{ color: 'var(--muted)', fontFamily: 'Barlow, sans-serif', fontSize: '0.9rem' }}>
+            Start a workout from the Dashboard.
+          </p>
+        </div>
+      ) : (
         <>
-          <div style={{ borderTop: '1px solid var(--border)', marginBottom: '1.5rem' }} />
           <div className="flex items-center justify-between mb-4">
-            <h2 className="forge-display text-2xl">WORKOUT HISTORY</h2>
             <span className="forge-label">{workouts.length} sessions</span>
           </div>
           <div className="flex flex-col gap-2">
@@ -602,15 +585,6 @@ function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onSta
             ))}
           </div>
         </>
-      )}
-
-      {workouts.length === 0 && templates.length === 0 && (
-        <div className="p-10 text-center" style={{ border: '1px dashed var(--border)' }}>
-          <div className="forge-display text-3xl mb-2" style={{ color: 'var(--border)' }}>NO HISTORY YET</div>
-          <p style={{ color: 'var(--muted)', fontFamily: 'Barlow, sans-serif', fontSize: '0.9rem' }}>
-            Start a workout from the Dashboard.
-          </p>
-        </div>
       )}
     </div>
   );
@@ -865,13 +839,8 @@ export default function WorkoutLogger({
     return (
       <StartScreen
         workouts={workouts}
-        templates={templates}
-        onStart={startWorkout}
         onTemplate={startFromTemplate}
         onDelete={deleteWorkout}
-        onStartGoalTemplate={startFromGoalTemplate}
-        onSaveTemplate={saveTemplate}
-        onDeleteTemplate={deleteTemplate}
       />
     );
   }

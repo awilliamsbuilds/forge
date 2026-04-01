@@ -21,7 +21,7 @@ const NAV_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
   },
   {
     view: 'log',
-    label: 'Log Workout',
+    label: 'History',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square">
         <circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="12" x2="15" y2="15" />
