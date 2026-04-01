@@ -548,7 +548,7 @@ function TemplatesSection({ templates, workouts, onStart, onEdit, onDelete }: {
   );
 }
 
-// ── Start screen ──────────────────────────────────────────────────────────────
+// ── Log screen (no active workout): templates + history ──────────────────────
 
 function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onStartGoalTemplate, onSaveTemplate, onDeleteTemplate }: {
   workouts: Workout[];
@@ -560,7 +560,6 @@ function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onSta
   onSaveTemplate: (t: WorkoutTemplate) => void;
   onDeleteTemplate: (id: string) => void;
 }) {
-  const [name, setName] = useState('');
   const [editing, setEditing] = useState<WorkoutTemplate | null>(null);
 
   if (editing) {
@@ -575,34 +574,16 @@ function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onSta
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
-      {/* New workout form */}
-      <div className="mb-8" style={{ maxWidth: '480px' }}>
-        <div className="forge-label mb-1">Ready to train?</div>
-        <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl mb-5">NEW WORKOUT</h1>
-        <div className="mb-1.5 forge-label">Workout Name</div>
-        <input
-          className="forge-input mb-3"
-          placeholder="e.g. Push Day, Leg Day..."
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && onStart(name)}
-          style={{ fontSize: '1rem', padding: '0.75rem 1rem' }}
-        />
-        <button className="btn-accent w-full py-4" onClick={() => onStart(name)}>
-          Start Workout
-        </button>
-      </div>
-
-      {/* Templates */}
+      {/* Templates section with edit/delete affordance */}
       <TemplatesSection
         templates={templates}
         workouts={workouts}
-        onStart={onStartGoalTemplate}
+        onStart={t => { onStartGoalTemplate(t); }}
         onEdit={setEditing}
         onDelete={onDeleteTemplate}
       />
 
-      {/* Full history */}
+      {/* Workout history */}
       {workouts.length > 0 && (
         <>
           <div style={{ borderTop: '1px solid var(--border)', marginBottom: '1.5rem' }} />
@@ -621,6 +602,15 @@ function StartScreen({ workouts, templates, onStart, onTemplate, onDelete, onSta
             ))}
           </div>
         </>
+      )}
+
+      {workouts.length === 0 && templates.length === 0 && (
+        <div className="p-10 text-center" style={{ border: '1px dashed var(--border)' }}>
+          <div className="forge-display text-3xl mb-2" style={{ color: 'var(--border)' }}>NO HISTORY YET</div>
+          <p style={{ color: 'var(--muted)', fontFamily: 'Barlow, sans-serif', fontSize: '0.9rem' }}>
+            Start a workout from the Dashboard.
+          </p>
+        </div>
       )}
     </div>
   );

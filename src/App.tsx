@@ -82,10 +82,12 @@ export default function App() {
         {view === 'dashboard' && (
           <Dashboard
             workouts={store.workouts}
-            weeklyStats={store.weeklyStats}
             activeWorkout={store.activeWorkout}
+            templates={store.templates}
             onNavigate={navigate}
             onImport={store.importWorkouts}
+            startWorkout={store.startWorkout}
+            startFromGoalTemplate={store.startFromGoalTemplate}
           />
         )}
         {view === 'log' && (
