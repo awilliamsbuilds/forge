@@ -54,7 +54,7 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
 
   return (
     <div className="fixed inset-0 z-[60]" style={{ background: 'rgba(0,0,0,0.85)' }} onClick={onClose}>
-      <div className="absolute bottom-0 left-0 right-0 flex flex-col" style={{ height: '90vh', background: 'var(--card)', border: '1px solid var(--border)', borderBottom: 'none' }} onClick={e => e.stopPropagation()}>
+      <div className="fixed left-0 right-0 bottom-0 top-[10vh] flex flex-col lg:top-1/2 lg:bottom-auto lg:left-1/2 lg:right-auto lg:w-[520px] lg:h-[80vh] lg:-translate-x-1/2 lg:-translate-y-1/2" style={{ zIndex: 61, background: 'var(--card)', border: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
           <div>
             <h3 className="forge-display text-2xl">ADD EXERCISE</h3>
