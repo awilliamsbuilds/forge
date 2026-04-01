@@ -88,6 +88,8 @@ export default function App() {
             onImport={store.importWorkouts}
             startWorkout={store.startWorkout}
             startFromGoalTemplate={store.startFromGoalTemplate}
+            saveTemplate={store.saveTemplate}
+            deleteTemplate={store.deleteTemplate}
           />
         )}
         {view === 'log' && (
