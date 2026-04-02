@@ -51,7 +51,7 @@ const initTemplates = (): WorkoutTemplate[] => {
           exerciseId: ex.exerciseId,
           exerciseName: ex.exerciseName,
           category: ex.category,
-          sets: ex.sets.map(s => ({ id: uid(), weight: s.weight, reps: s.reps })),
+          sets: ex.sets.map(s => ({ id: uid(), weight: s.weight, reps: s.reps, restSeconds: s.restSeconds ?? 90 })),
         }))
       : [];
     return { id: uid(), name, exercises };
@@ -107,7 +107,7 @@ export const useWorkouts = () => {
         exercises: template.exercises.map(ex => ({
           ...ex,
           id: uid(),
-          sets: ex.sets.map(s => ({ ...s, id: uid(), completed: false })),
+          sets: ex.sets.map(s => ({ ...s, id: uid(), completed: false, restSeconds: s.restSeconds ?? 90 })),
         })),
         startTime: Date.now(),
       });
@@ -126,7 +126,7 @@ export const useWorkouts = () => {
           exerciseId: ex.exerciseId,
           exerciseName: ex.exerciseName,
           category: ex.category,
-          sets: ex.sets.map(s => ({ id: uid(), weight: s.weight, reps: s.reps, completed: false })),
+          sets: ex.sets.map(s => ({ id: uid(), weight: s.weight, reps: s.reps, completed: false, restSeconds: s.restSeconds ?? 90 })),
         })),
         startTime: Date.now(),
       });
@@ -181,7 +181,7 @@ export const useWorkouts = () => {
         exerciseId: exercise.id,
         exerciseName: exercise.name,
         category: exercise.category,
-        sets: [{ id: uid(), reps: 8, weight: 0, completed: false }],
+        sets: [{ id: uid(), reps: 8, weight: 0, completed: false, restSeconds: 90 }],
       };
       setActive({ ...activeWorkout, exercises: [...activeWorkout.exercises, newEx] });
     },
@@ -218,6 +218,7 @@ export const useWorkouts = () => {
                 reps: last?.reps ?? 8,
                 weight: last?.weight ?? 0,
                 completed: false,
+                restSeconds: last?.restSeconds ?? 90,
               },
             ],
           };

@@ -560,6 +560,106 @@ function Timer({ startTime }: { startTime: number }) {
   );
 }
 
+// ── Rest timer ────────────────────────────────────────────────────────────────
+
+interface ActiveTimer {
+  exerciseId: string;
+  setId: string;
+  durationSeconds: number;
+  startedAt: number;
+}
+
+const fmtRest = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+// Inline rest row — appears after every set in the table
+function RestRow({ colSpan, restSeconds, active, startedAt, onAdjust, onSkip }: {
+  colSpan: number;
+  restSeconds: number;
+  active: boolean;
+  startedAt?: number;
+  onAdjust: (delta: number) => void;
+  onSkip: () => void;
+}) {
+  const [remaining, setRemaining] = useState(() =>
+    active && startedAt
+      ? Math.max(0, restSeconds - Math.floor((Date.now() - startedAt) / 1000))
+      : restSeconds
+  );
+
+  useEffect(() => {
+    if (!active || !startedAt) { setRemaining(restSeconds); return; }
+    const id = setInterval(() => {
+      setRemaining(Math.max(0, restSeconds - Math.floor((Date.now() - startedAt) / 1000)));
+    }, 250);
+    return () => clearInterval(id);
+  }, [active, startedAt, restSeconds]);
+
+  const btnStyle: React.CSSProperties = {
+    background: 'none', border: 'none', cursor: 'pointer',
+    fontFamily: 'Space Mono, monospace', fontSize: '0.65rem',
+    padding: '0 0.4rem', lineHeight: 1, flexShrink: 0,
+  };
+
+  if (!active) {
+    return (
+      <tr>
+        <td colSpan={colSpan} style={{ padding: '1px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '0 0.5rem', gap: '0.25rem' }}>
+            <button onClick={() => onAdjust(-15)} style={{ ...btnStyle, color: 'var(--muted)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--dim)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}>−</button>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: 'var(--dim)', letterSpacing: '0.05em', flexShrink: 0 }}>
+              {fmtRest(restSeconds)}
+            </span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            <button onClick={() => onAdjust(15)} style={{ ...btnStyle, color: 'var(--muted)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--dim)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}>+</button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  const pct = restSeconds > 0 ? remaining / restSeconds : 0;
+  const done = remaining === 0;
+
+  return (
+    <tr>
+      <td colSpan={colSpan} style={{ padding: '2px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+          <button onClick={() => onAdjust(-15)}
+            style={{ ...btnStyle, color: done ? 'var(--muted)' : 'rgba(200,255,0,0.5)', padding: '0 0.5rem', height: '28px' }}
+            onMouseEnter={e => (e.currentTarget.style.color = done ? 'var(--dim)' : 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = done ? 'var(--muted)' : 'rgba(200,255,0,0.5)')}>−</button>
+          <div onClick={onSkip} style={{ flex: 1, position: 'relative', height: '28px', background: 'rgba(0,0,0,0.3)', overflow: 'hidden', cursor: 'pointer' }}>
+            <div style={{
+              position: 'absolute', left: 0, top: 0, bottom: 0,
+              width: `${pct * 100}%`,
+              background: done ? 'var(--success)' : 'var(--accent)',
+              transition: 'width 0.25s linear, background 0.3s',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', fontWeight: 700,
+              color: done ? '#0a0a0a' : pct > 0.35 ? '#0a0a0a' : 'var(--text)',
+              letterSpacing: '0.05em', transition: 'color 0.2s',
+            }}>
+              {fmtRest(remaining)}
+            </div>
+          </div>
+          <button onClick={() => onAdjust(15)}
+            style={{ ...btnStyle, color: done ? 'var(--muted)' : 'rgba(200,255,0,0.5)', padding: '0 0.5rem', height: '28px' }}
+            onMouseEnter={e => (e.currentTarget.style.color = done ? 'var(--dim)' : 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = done ? 'var(--muted)' : 'rgba(200,255,0,0.5)')}>+</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 // ── Active workout view ───────────────────────────────────────────────────────
 
 function ActiveWorkoutView({
@@ -579,6 +679,7 @@ function ActiveWorkoutView({
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
 
   const completedSets = active.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.completed).length, 0);
   const totalSets = active.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
@@ -667,35 +768,52 @@ function ActiveWorkoutView({
 
                 {/* Sets — horizontally scrollable on small screens */}
                 <div className="overflow-x-auto">
-                  <table className="forge-table" style={{ minWidth: '420px' }}>
+                  <table className="forge-table" style={{ minWidth: '360px' }}>
                     <colgroup>
-                      <col style={{ width: '2.25rem' }} />
-                      <col style={{ width: '5rem' }} />
-                      <col />
-                      <col />
+                      <col style={{ width: '2rem' }} />
                       <col style={{ width: '2.5rem' }} />
+                      <col style={{ width: '4.5rem' }} />
+                      <col />
+                      <col />
                       <col style={{ width: '2rem' }} />
                     </colgroup>
                     <thead>
                       <tr>
                         <th>#</th>
+                        <th style={{ textAlign: 'center' }}>✓</th>
                         <th>Prev</th>
                         <th>Weight (lbs)</th>
                         <th>Reps</th>
-                        <th style={{ textAlign: 'center' }}>✓</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {ex.sets.map((set, idx) => {
                         const prev = prevSets[idx];
+                        const timerActive = activeTimer?.exerciseId === ex.id && activeTimer?.setId === set.id;
                         return (
+                          <>
                           <tr
                             key={set.id}
                             style={{ background: set.completed ? 'rgba(0,217,126,0.05)' : undefined }}
                           >
                             <td>
                               <span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{idx + 1}</span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <input
+                                type="checkbox"
+                                className="forge-checkbox"
+                                checked={set.completed}
+                                onChange={e => {
+                                  onUpdateSet(ex.id, set.id, { completed: e.target.checked });
+                                  if (e.target.checked) {
+                                    setActiveTimer({ exerciseId: ex.id, setId: set.id, durationSeconds: set.restSeconds ?? 90, startedAt: Date.now() });
+                                  } else if (timerActive) {
+                                    setActiveTimer(null);
+                                  }
+                                }}
+                              />
                             </td>
                             <td>
                               <span className="forge-label" style={{ color: 'var(--muted)' }}>
@@ -719,14 +837,6 @@ function ActiveWorkoutView({
                                 min={1}
                               />
                             </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <input
-                                type="checkbox"
-                                className="forge-checkbox"
-                                checked={set.completed}
-                                onChange={e => onUpdateSet(ex.id, set.id, { completed: e.target.checked })}
-                              />
-                            </td>
                             <td>
                               {ex.sets.length > 1 && (
                                 <button
@@ -738,6 +848,16 @@ function ActiveWorkoutView({
                               )}
                             </td>
                           </tr>
+                          <RestRow
+                            key={`rest-${set.id}`}
+                            colSpan={6}
+                            restSeconds={set.restSeconds ?? 90}
+                            active={timerActive}
+                            startedAt={timerActive ? activeTimer!.startedAt : undefined}
+                            onAdjust={delta => onUpdateSet(ex.id, set.id, { restSeconds: Math.max(15, (set.restSeconds ?? 90) + delta) })}
+                            onSkip={() => setActiveTimer(null)}
+                          />
+                          </>
                         );
                       })}
                     </tbody>

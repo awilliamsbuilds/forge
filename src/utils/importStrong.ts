@@ -147,6 +147,7 @@ export const parseStrongCSV = (csvText: string): StrongImportPreview => {
       weight,
       reps: reps || 1,
       completed: true,
+      restSeconds: 90,
     });
   }
 

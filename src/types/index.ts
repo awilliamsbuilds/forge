@@ -23,6 +23,7 @@ export interface WorkoutSet {
   reps: number;
   weight: number; // lbs
   completed: boolean;
+  restSeconds: number; // rest after this set, default 90
 }
 
 export interface WorkoutExercise {
@@ -78,6 +79,7 @@ export interface TemplateSet {
   id: string;
   weight: number;
   reps: number;
+  restSeconds: number; // rest after this set, default 90
 }
 
 export interface TemplateExercise {

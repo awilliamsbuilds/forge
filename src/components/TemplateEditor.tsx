@@ -3,6 +3,7 @@ import { Exercise, MuscleGroup, WorkoutTemplate, TemplateExercise, TemplateSet }
 import { EXERCISES } from '../data/exercises';
 
 const uid = () => Math.random().toString(36).slice(2, 11);
+const fmtRest = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 export const newTemplate = (): WorkoutTemplate => ({
   id: uid(),
@@ -112,7 +113,7 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
   const addExercise = (ex: Exercise) => {
     const newEx: TemplateExercise = {
       id: uid(), exerciseId: ex.id, exerciseName: ex.name, category: ex.category,
-      sets: [{ id: uid(), weight: 0, reps: 8 }],
+      sets: [{ id: uid(), weight: 0, reps: 8, restSeconds: 90 }],
     };
     setDraft(d => ({ ...d, exercises: [...d.exercises, newEx] }));
   };
@@ -126,7 +127,7 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
       exercises: d.exercises.map(e => {
         if (e.id !== exId) return e;
         const last = e.sets[e.sets.length - 1];
-        return { ...e, sets: [...e.sets, { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? 8 }] };
+        return { ...e, sets: [...e.sets, { id: uid(), weight: last?.weight ?? 0, reps: last?.reps ?? 8, restSeconds: last?.restSeconds ?? 90 }] };
       }),
     }));
 
@@ -190,12 +191,12 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
                 <button onClick={() => removeExercise(ex.id)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0.25rem 0.5rem', flexShrink: 0 }}>✕</button>
               </div>
               <div className="overflow-x-auto">
-                <table className="forge-table" style={{ minWidth: '340px' }}>
+                <table className="forge-table" style={{ minWidth: '380px' }}>
                   <colgroup>
-                    <col style={{ width: '2.25rem' }} /><col /><col /><col style={{ width: '2rem' }} />
+                    <col style={{ width: '2.25rem' }} /><col /><col /><col style={{ width: '5rem' }} /><col style={{ width: '2rem' }} />
                   </colgroup>
                   <thead>
-                    <tr><th>#</th><th>Goal Weight (lbs)</th><th>Goal Reps</th><th></th></tr>
+                    <tr><th>#</th><th>Goal Weight (lbs)</th><th>Goal Reps</th><th style={{ textAlign: 'center' }}>Rest</th><th></th></tr>
                   </thead>
                   <tbody>
                     {ex.sets.map((s, idx) => (
@@ -203,6 +204,17 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
                         <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{idx + 1}</span></td>
                         <td><Stepper value={s.weight} onChange={v => updateSet(ex.id, s.id, { weight: v })} step={2.5} min={0} decimals={1} /></td>
                         <td><Stepper value={s.reps} onChange={v => updateSet(ex.id, s.id, { reps: v })} step={1} min={1} /></td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+                            <button onClick={() => updateSet(ex.id, s.id, { restSeconds: Math.max(15, (s.restSeconds ?? 90) - 15) })}
+                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.75rem' }}>−</button>
+                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: 'var(--accent)', minWidth: '2rem', textAlign: 'center' }}>
+                              {fmtRest(s.restSeconds ?? 90)}
+                            </span>
+                            <button onClick={() => updateSet(ex.id, s.id, { restSeconds: (s.restSeconds ?? 90) + 15 })}
+                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.75rem' }}>+</button>
+                          </div>
+                        </td>
                         <td>
                           {ex.sets.length > 1 && (
                             <button onClick={() => removeSet(ex.id, s.id)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
