@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ActiveWorkout, Exercise, Workout, WorkoutSet, MuscleGroup, WorkoutTemplate } from '../types';
 import { EXERCISES } from '../data/exercises';
+import { useCustomExercises } from '../hooks/useCustomExercises';
 
 interface WorkoutLoggerProps {
   activeWorkout: ActiveWorkout | null;
@@ -74,11 +75,47 @@ const CATS: { id: MuscleGroup | 'all'; label: string }[] = [
 function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void; onClose: () => void }) {
   const [search, setSearch] = useState('');
   const [cat, setCat] = useState<MuscleGroup | 'all'>('all');
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newCat, setNewCat] = useState<MuscleGroup>('chest');
+  const [newEquip, setNewEquip] = useState('');
+  const { customs, createExercise } = useCustomExercises();
 
-  const filtered = EXERCISES.filter(e => {
+  const allExercises = useMemo(() => [...EXERCISES, ...customs], [customs]);
+
+  const filtered = allExercises.filter(e => {
     const matchCat = cat === 'all' || e.category === cat;
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
+  });
+
+  const openCreate = () => {
+    setNewName(search);
+    setNewCat(cat === 'all' ? 'chest' : cat);
+    setNewEquip('');
+    setCreating(true);
+  };
+
+  const handleCreate = () => {
+    const name = newName.trim();
+    if (!name) return;
+    const ex = createExercise(name, newCat, newEquip);
+    onSelect(ex);
+    onClose();
+  };
+
+  const chipStyle = (active: boolean) => ({
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontWeight: 700,
+    fontSize: '0.68rem',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase' as const,
+    padding: '0.2rem 0.55rem',
+    border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+    background: active ? 'rgba(200,255,0,0.1)' : 'transparent',
+    color: active ? 'var(--accent)' : 'var(--dim)',
+    cursor: 'pointer',
+    flexShrink: 0,
   });
 
   return (
@@ -97,83 +134,135 @@ function ExercisePicker({ onSelect, onClose }: { onSelect: (e: Exercise) => void
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div>
-            <h3 className="forge-display text-2xl">ADD EXERCISE</h3>
-            <div className="forge-label" style={{ color: 'var(--muted)' }}>{filtered.length} exercises</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem 0.5rem' }}>✕</button>
-        </div>
-
-        {/* Search */}
-        <div className="px-4 pt-3 pb-2 flex-shrink-0">
-          <input
-            className="forge-input"
-            placeholder="Search exercises..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus
-          />
-        </div>
-
-        {/* Category chips */}
-        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto flex-shrink-0">
-          {CATS.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setCat(c.id)}
-              style={{
-                fontFamily: 'Barlow Condensed, sans-serif',
-                fontWeight: 700,
-                fontSize: '0.68rem',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                padding: '0.2rem 0.55rem',
-                border: `1px solid ${cat === c.id ? 'var(--accent)' : 'var(--border)'}`,
-                background: cat === c.id ? 'rgba(200,255,0,0.1)' : 'transparent',
-                color: cat === c.id ? 'var(--accent)' : 'var(--dim)',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-
-        {/* List */}
-        <div className="overflow-y-auto flex-1" style={{ borderTop: '1px solid var(--border)' }}>
-          {filtered.length === 0 ? (
-            <div className="p-8 text-center forge-label">No exercises found</div>
-          ) : (
-            filtered.map(ex => (
-              <button
-                key={ex.id}
-                onClick={() => { onSelect(ex); onClose(); }}
-                className="w-full flex items-center gap-3 px-4 text-left"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  color: 'var(--text)',
-                  minHeight: '44px',
-                  paddingTop: '0.5rem',
-                  paddingBottom: '0.5rem',
-                }}
-              >
-                <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
-                <div className="min-w-0">
-                  <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}>
-                    {ex.name}
-                  </div>
-                  <div className="forge-label truncate" style={{ marginTop: '0.1rem' }}>{ex.equipment}</div>
+        {creating ? (
+          /* ── Create custom exercise form ── */
+          <>
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+              <h3 className="forge-display text-2xl">CREATE EXERCISE</h3>
+              <button onClick={() => setCreating(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem 0.5rem' }}>✕</button>
+            </div>
+            <div className="flex flex-col gap-4 p-4 flex-1 overflow-y-auto">
+              <div>
+                <div className="forge-label mb-1.5">Exercise Name *</div>
+                <input
+                  className="forge-input"
+                  placeholder="e.g. Cable Lateral Raise"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  autoFocus
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+                />
+              </div>
+              <div>
+                <div className="forge-label mb-1.5">Category *</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {CATS.filter(c => c.id !== 'all').map(c => (
+                    <button key={c.id} onClick={() => setNewCat(c.id as MuscleGroup)} style={chipStyle(newCat === c.id)}>
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div>
+                <div className="forge-label mb-1.5">Equipment <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span></div>
+                <input
+                  className="forge-input"
+                  placeholder="e.g. Cable Machine, Rope"
+                  value={newEquip}
+                  onChange={e => setNewEquip(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+                />
+              </div>
+            </div>
+            <div className="p-4 flex gap-3 flex-shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+              <button className="btn-ghost flex-1 py-3" onClick={() => setCreating(false)}>Cancel</button>
+              <button
+                className="btn-accent flex-1 py-3"
+                onClick={handleCreate}
+                disabled={!newName.trim()}
+              >
+                Add to Workout
               </button>
-            ))
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          /* ── Exercise list ── */
+          <>
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <h3 className="forge-display text-2xl">ADD EXERCISE</h3>
+                <div className="forge-label" style={{ color: 'var(--muted)' }}>{filtered.length} exercises</div>
+              </div>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem 0.5rem' }}>✕</button>
+            </div>
+
+            <div className="px-4 pt-3 pb-2 flex-shrink-0">
+              <input
+                className="forge-input"
+                placeholder="Search exercises..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto flex-shrink-0">
+              {CATS.map(c => (
+                <button key={c.id} onClick={() => setCat(c.id)} style={chipStyle(cat === c.id)}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="overflow-y-auto flex-1" style={{ borderTop: '1px solid var(--border)' }}>
+              {filtered.length === 0 ? (
+                <div className="p-8 text-center">
+                  <div className="forge-label mb-3">No exercises found</div>
+                  <button className="btn-accent px-5 py-2" onClick={openCreate}>
+                    + Create &ldquo;{search || 'Custom'}&rdquo;
+                  </button>
+                </div>
+              ) : (
+                filtered.map(ex => (
+                  <button
+                    key={ex.id}
+                    onClick={() => { onSelect(ex); onClose(); }}
+                    className="w-full flex items-center gap-3 px-4 text-left"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      color: 'var(--text)',
+                      minHeight: '44px',
+                      paddingTop: '0.5rem',
+                      paddingBottom: '0.5rem',
+                    }}
+                  >
+                    <span className={`cat-badge cat-${ex.category} flex-shrink-0`}>{ex.category}</span>
+                    <div className="min-w-0">
+                      <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}>
+                        {ex.name}
+                      </div>
+                      <div className="forge-label truncate" style={{ marginTop: '0.1rem' }}>{ex.equipment}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Footer: create custom */}
+            <div className="flex-shrink-0 px-4 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <button
+                className="btn-ghost w-full py-2.5"
+                style={{ fontSize: '0.75rem' }}
+                onClick={openCreate}
+              >
+                + Create Custom Exercise
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
