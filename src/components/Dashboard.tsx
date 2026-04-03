@@ -11,6 +11,7 @@ interface DashboardProps {
   onImport: (workouts: Workout[]) => number;
   startWorkout: (name: string) => void;
   startFromGoalTemplate: (template: WorkoutTemplate) => void;
+  onResume: () => void;
   saveTemplate: (t: WorkoutTemplate) => void;
   deleteTemplate: (id: string) => void;
 }
@@ -169,7 +170,7 @@ function TemplateCard({ template, lastDate, onStart, onEdit, onDelete }: {
 
 export default function Dashboard({
   workouts, activeWorkout, templates, onNavigate, onImport,
-  startWorkout, startFromGoalTemplate, saveTemplate, deleteTemplate,
+  startWorkout, startFromGoalTemplate, onResume, saveTemplate, deleteTemplate,
 }: DashboardProps) {
   const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<WorkoutTemplate | null>(null);
@@ -194,7 +195,6 @@ export default function Dashboard({
 
   const handleStartTemplate = (t: WorkoutTemplate) => {
     startFromGoalTemplate(t);
-    onNavigate('log');
   };
 
   // Show editor when creating/editing a template
@@ -223,7 +223,7 @@ export default function Dashboard({
 
       {/* Active workout banner */}
       {activeWorkout && (
-        <button onClick={() => onNavigate('log')} className="w-full mb-5 flex items-center gap-3 p-4 text-left"
+        <button onClick={onResume} className="w-full mb-5 flex items-center gap-3 p-4 text-left"
           style={{ background: 'rgba(200,255,0,0.06)', border: '1px solid rgba(200,255,0,0.3)', borderLeft: '3px solid var(--accent)', cursor: 'pointer' }}>
           <span className="w-2 h-2 rounded-full animate-blink flex-shrink-0" style={{ background: 'var(--accent)' }} />
           <div className="flex-1 min-w-0">
@@ -235,7 +235,7 @@ export default function Dashboard({
       )}
 
       {/* Start empty */}
-      <button className="btn-accent w-full py-4 mb-6 text-base" onClick={() => { startWorkout(''); onNavigate('log'); }}>
+      <button className="btn-accent w-full py-4 mb-6 text-base" onClick={() => startWorkout('')}>
         + Start an Empty Workout
       </button>
 

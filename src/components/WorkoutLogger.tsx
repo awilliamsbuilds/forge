@@ -691,7 +691,7 @@ function ActiveWorkoutView({
       {/* Workout header */}
       <div className="mb-5 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
         {/* Name row */}
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-center justify-between gap-3 mb-2">
           {editingName ? (
             <input
               className="forge-input flex-1"
@@ -711,21 +711,9 @@ function ActiveWorkoutView({
               {active.name}
             </button>
           )}
-          <div className="flex gap-2 flex-shrink-0 mt-1">
-            <button className="btn-ghost py-2 px-3" onClick={onExit} style={{ fontSize: '0.75rem' }}>
-              ← Exit
-            </button>
-            <button className="btn-ghost py-2 px-3" onClick={onCancel} style={{ fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
-              Discard
-            </button>
-            <button
-              className="btn-accent py-2 px-4"
-              onClick={onFinish}
-              disabled={active.exercises.length === 0}
-            >
-              Finish
-            </button>
-          </div>
+          <button className="btn-ghost py-2 px-3 flex-shrink-0" onClick={onExit} style={{ fontSize: '0.75rem' }}>
+            ← Exit
+          </button>
         </div>
         {/* Meta row */}
         <div className="flex items-center gap-3">
@@ -738,8 +726,7 @@ function ActiveWorkoutView({
       {/* Empty state */}
       {active.exercises.length === 0 ? (
         <div className="p-10 text-center mb-4" style={{ border: '1px dashed var(--border)' }}>
-          <div className="forge-label mb-3">No exercises added yet</div>
-          <button className="btn-accent" onClick={() => setShowPicker(true)}>Add First Exercise</button>
+          <div className="forge-label">No exercises added yet</div>
         </div>
       ) : (
         <div className="flex flex-col gap-4 mb-4">
@@ -771,103 +758,127 @@ function ActiveWorkoutView({
                   </button>
                 </div>
 
-                {/* Sets — horizontally scrollable on small screens */}
-                <div className="overflow-x-auto">
-                  <table className="forge-table" style={{ minWidth: '360px' }}>
-                    <colgroup>
-                      <col style={{ width: '2rem' }} />
-                      <col style={{ width: '2.5rem' }} />
-                      <col style={{ width: '4.5rem' }} />
-                      <col />
-                      <col />
-                      <col style={{ width: '2rem' }} />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th style={{ textAlign: 'center' }}>✓</th>
-                        <th>Prev</th>
-                        <th>Weight (lbs)</th>
-                        <th>Reps</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ex.sets.map((set, idx) => {
-                        const prev = prevSets[idx];
-                        const timerActive = activeTimer?.exerciseId === ex.id && activeTimer?.setId === set.id;
-                        return (
-                          <>
-                          <tr
-                            key={set.id}
-                            style={{ background: set.completed ? 'rgba(0,217,126,0.05)' : undefined }}
-                          >
-                            <td>
-                              <span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{idx + 1}</span>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <input
-                                type="checkbox"
-                                className="forge-checkbox"
-                                checked={set.completed}
-                                onChange={e => {
-                                  onUpdateSet(ex.id, set.id, { completed: e.target.checked });
-                                  if (e.target.checked) {
-                                    setActiveTimer({ exerciseId: ex.id, setId: set.id, durationSeconds: set.restSeconds ?? 90, startedAt: Date.now() });
-                                  } else if (timerActive) {
-                                    setActiveTimer(null);
-                                  }
-                                }}
-                              />
-                            </td>
-                            <td>
-                              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.78rem', color: 'var(--dim)' }}>
-                                {prev ? `${prev.weight}×${prev.reps}` : '—'}
-                              </span>
-                            </td>
-                            <td>
-                              <Stepper
-                                value={set.weight}
-                                onChange={v => onUpdateSet(ex.id, set.id, { weight: v })}
-                                step={2.5}
-                                min={0}
-                                decimals={1}
-                              />
-                            </td>
-                            <td>
-                              <Stepper
-                                value={set.reps}
-                                onChange={v => onUpdateSet(ex.id, set.id, { reps: v })}
-                                step={1}
-                                min={1}
-                              />
-                            </td>
-                            <td>
-                              {ex.sets.length > 1 && (
-                                <button
-                                  onClick={() => onRemoveSet(ex.id, set.id)}
-                                  style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.75rem' }}
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                          <RestRow
-                            key={`rest-${set.id}`}
-                            colSpan={6}
-                            restSeconds={set.restSeconds ?? 90}
-                            active={timerActive}
-                            startedAt={timerActive ? activeTimer!.startedAt : undefined}
-                            onAdjust={delta => onUpdateSet(ex.id, set.id, { restSeconds: Math.max(15, (set.restSeconds ?? 90) + delta) })}
-                            onSkip={() => setActiveTimer(null)}
-                          />
-                          </>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                {/* Sets */}
+                <table className="forge-table" style={{ width: '100%' }}>
+                  <colgroup>
+                    <col style={{ width: '1.75rem' }} />
+                    <col />
+                    <col style={{ width: '5.5rem' }} />
+                    <col style={{ width: '4.5rem' }} />
+                    <col style={{ width: '2.25rem' }} />
+                    <col style={{ width: '1.5rem' }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Prev</th>
+                      <th style={{ textAlign: 'center' }}>Weight</th>
+                      <th style={{ textAlign: 'center' }}>Reps</th>
+                      <th style={{ textAlign: 'center' }}>✓</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ex.sets.map((set, idx) => {
+                      const prev = prevSets[idx];
+                      const timerActive = activeTimer?.exerciseId === ex.id && activeTimer?.setId === set.id;
+                      const completeSet = () => {
+                        onUpdateSet(ex.id, set.id, { completed: true });
+                        setActiveTimer({ exerciseId: ex.id, setId: set.id, durationSeconds: set.restSeconds ?? 90, startedAt: Date.now() });
+                        const nextSet = ex.sets[idx + 1];
+                        if (nextSet) {
+                          setTimeout(() => document.getElementById(`w-${ex.id}-${nextSet.id}`)?.focus(), 50);
+                        }
+                      };
+                      const inputBase: React.CSSProperties = {
+                        width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
+                        color: 'var(--text)', fontFamily: 'Space Mono, monospace', fontSize: '0.9rem',
+                        textAlign: 'center', padding: '0.35rem 0.25rem', outline: 'none',
+                      };
+                      return (
+                        <>
+                        <tr
+                          key={set.id}
+                          style={{ background: set.completed ? 'rgba(0,217,126,0.05)' : undefined }}
+                        >
+                          <td>
+                            <span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{idx + 1}</span>
+                          </td>
+                          <td>
+                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.78rem', color: 'var(--dim)' }}>
+                              {prev ? `${prev.weight}×${prev.reps}` : '—'}
+                            </span>
+                          </td>
+                          <td>
+                            <input
+                              id={`w-${ex.id}-${set.id}`}
+                              type="number"
+                              inputMode="decimal"
+                              enterKeyHint="next"
+                              value={set.weight || ''}
+                              placeholder="0"
+                              style={inputBase}
+                              onChange={e => onUpdateSet(ex.id, set.id, { weight: parseFloat(e.target.value) || 0 })}
+                              onFocus={e => { e.target.select(); e.target.style.borderColor = 'var(--accent)'; e.target.style.background = 'rgba(200,255,0,0.05)'; }}
+                              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'var(--surface)'; }}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById(`r-${ex.id}-${set.id}`)?.focus(); } }}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              id={`r-${ex.id}-${set.id}`}
+                              type="number"
+                              inputMode="numeric"
+                              enterKeyHint="done"
+                              value={set.reps || ''}
+                              placeholder="0"
+                              style={inputBase}
+                              onChange={e => onUpdateSet(ex.id, set.id, { reps: parseInt(e.target.value) || 0 })}
+                              onFocus={e => { e.target.select(); e.target.style.borderColor = 'var(--accent)'; e.target.style.background = 'rgba(200,255,0,0.05)'; }}
+                              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.background = 'var(--surface)'; }}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); completeSet(); } }}
+                            />
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              className="forge-checkbox"
+                              checked={set.completed}
+                              onChange={e => {
+                                onUpdateSet(ex.id, set.id, { completed: e.target.checked });
+                                if (e.target.checked) {
+                                  setActiveTimer({ exerciseId: ex.id, setId: set.id, durationSeconds: set.restSeconds ?? 90, startedAt: Date.now() });
+                                } else if (timerActive) {
+                                  setActiveTimer(null);
+                                }
+                              }}
+                            />
+                          </td>
+                          <td>
+                            {ex.sets.length > 1 && (
+                              <button
+                                onClick={() => onRemoveSet(ex.id, set.id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.75rem' }}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                        <RestRow
+                          key={`rest-${set.id}`}
+                          colSpan={6}
+                          restSeconds={set.restSeconds ?? 90}
+                          active={timerActive}
+                          startedAt={timerActive ? activeTimer!.startedAt : undefined}
+                          onAdjust={delta => onUpdateSet(ex.id, set.id, { restSeconds: Math.max(15, (set.restSeconds ?? 90) + delta) })}
+                          onSkip={() => setActiveTimer(null)}
+                        />
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
                 <div className="px-4 py-3">
                   <button className="btn-ghost w-full py-2.5" onClick={() => onAddSet(ex.id)} style={{ fontSize: '0.75rem' }}>
@@ -880,11 +891,25 @@ function ActiveWorkoutView({
         </div>
       )}
 
-      {active.exercises.length > 0 && (
-        <button className="btn-ghost w-full py-3 mb-4" onClick={() => setShowPicker(true)}>
-          + Add Exercise
-        </button>
-      )}
+      <button className="btn-ghost w-full py-3" onClick={() => setShowPicker(true)}
+        style={{ fontSize: '0.85rem' }}>
+        + ADD EXERCISE
+      </button>
+
+      <div style={{ height: '2rem' }} />
+
+      <button
+        className="btn-accent w-full py-3 mb-3"
+        onClick={onFinish}
+        disabled={active.exercises.length === 0}
+        style={{ fontSize: '0.85rem' }}
+      >
+        FINISH WORKOUT
+      </button>
+      <button className="w-full py-3 mb-4" onClick={onCancel}
+        style={{ background: 'none', border: '1px solid var(--danger)', color: 'var(--danger)', cursor: 'pointer', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.1em' }}>
+        DISCARD WORKOUT
+      </button>
 
       {showPicker && (
         <ExercisePicker onSelect={onAddExercise} onClose={() => setShowPicker(false)} />

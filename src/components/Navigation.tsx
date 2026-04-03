@@ -4,6 +4,7 @@ interface NavProps {
   currentView: View;
   onNavigate: (v: View) => void;
   hasActiveWorkout: boolean;
+  onResumeWorkout: () => void;
 }
 
 // ── Desktop sidebar items (all 5 views) ───────────────────────────────────────
@@ -65,7 +66,7 @@ const SIDEBAR_ITEMS: { view: View; label: string; icon: JSX.Element }[] = [
 const BOTTOM_LEFT: (typeof SIDEBAR_ITEMS[number])[] = SIDEBAR_ITEMS.filter(i => i.view === 'log' || i.view === 'library');
 const BOTTOM_RIGHT: (typeof SIDEBAR_ITEMS[number])[] = SIDEBAR_ITEMS.filter(i => i.view === 'progress' || i.view === 'records');
 
-export default function Navigation({ currentView, onNavigate, hasActiveWorkout }: NavProps) {
+export default function Navigation({ currentView, onNavigate, hasActiveWorkout, onResumeWorkout }: NavProps) {
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────────── */}
@@ -175,7 +176,7 @@ export default function Navigation({ currentView, onNavigate, hasActiveWorkout }
         {/* Center START button */}
         <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '72px' }}>
           <button
-            onClick={() => onNavigate(hasActiveWorkout ? 'log' : 'dashboard')}
+            onClick={() => hasActiveWorkout ? onResumeWorkout() : onNavigate('dashboard')}
             aria-label={hasActiveWorkout ? 'Resume workout' : 'Start workout'}
             style={{
               width: '52px',

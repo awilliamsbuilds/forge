@@ -17,6 +17,7 @@ function hashToView(hash: string): View {
 
 export default function App() {
   const [view, setView] = useState<View>(() => hashToView(window.location.hash));
+  const [showingWorkout, setShowingWorkout] = useState(false);
   const store = useWorkouts();
 
   useEffect(() => {
@@ -25,9 +26,21 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
-  const navigate = (v: View) => {
+  // Raw navigate — never touches showingWorkout
+  const goTo = (v: View) => {
     window.location.hash = v;
     setView(v);
+  };
+
+  // Tab navigation — clears the workout overlay
+  const navigate = (v: View) => {
+    setShowingWorkout(false);
+    goTo(v);
+  };
+
+  const resumeWorkout = () => {
+    setShowingWorkout(true);
+    goTo('log');
   };
 
   return (
@@ -36,24 +49,12 @@ export default function App() {
         currentView={view}
         onNavigate={navigate}
         hasActiveWorkout={!!store.activeWorkout}
+        onResumeWorkout={resumeWorkout}
       />
 
       {/* Main content — desktop: offset for sidebar; mobile: offset for bottom nav */}
       <main className="lg:ml-[220px] min-h-screen pb-[64px] lg:pb-0">
-        {view === 'dashboard' && (
-          <Dashboard
-            workouts={store.workouts}
-            activeWorkout={store.activeWorkout}
-            templates={store.templates}
-            onNavigate={navigate}
-            onImport={store.importWorkouts}
-            startWorkout={store.startWorkout}
-            startFromGoalTemplate={store.startFromGoalTemplate}
-            saveTemplate={store.saveTemplate}
-            deleteTemplate={store.deleteTemplate}
-          />
-        )}
-        {view === 'log' && (
+        {showingWorkout && store.activeWorkout ? (
           <WorkoutLogger
             activeWorkout={store.activeWorkout}
             workouts={store.workouts}
@@ -62,8 +63,8 @@ export default function App() {
             startFromTemplate={store.startFromTemplate}
             startFromGoalTemplate={store.startFromGoalTemplate}
             updateWorkoutName={store.updateWorkoutName}
-            finishWorkout={store.finishWorkout}
-            cancelWorkout={store.cancelWorkout}
+            finishWorkout={() => { store.finishWorkout(); setShowingWorkout(false); goTo('dashboard'); }}
+            cancelWorkout={() => { store.cancelWorkout(); setShowingWorkout(false); goTo('dashboard'); }}
             deleteWorkout={store.deleteWorkout}
             saveTemplate={store.saveTemplate}
             deleteTemplate={store.deleteTemplate}
@@ -72,20 +73,60 @@ export default function App() {
             addSet={store.addSet}
             updateSet={store.updateSet}
             removeSet={store.removeSet}
-            onExit={() => navigate('dashboard')}
+            onExit={() => { setShowingWorkout(false); goTo('dashboard'); }}
             getPrevPerformance={store.getPrevPerformance}
           />
-        )}
-        {view === 'library' && <ExerciseLibrary />}
-        {view === 'progress' && (
-          <ProgressCharts
-            workouts={store.workouts}
-            loggedExerciseIds={store.loggedExerciseIds}
-            getExerciseProgress={store.getExerciseProgress}
-          />
-        )}
-        {view === 'records' && (
-          <PersonalRecords personalRecords={store.personalRecords} />
+        ) : (
+          <>
+            {view === 'dashboard' && (
+              <Dashboard
+                workouts={store.workouts}
+                activeWorkout={store.activeWorkout}
+                templates={store.templates}
+                onNavigate={navigate}
+                onImport={store.importWorkouts}
+                startWorkout={(name) => { store.startWorkout(name); setShowingWorkout(true); goTo('log'); }}
+                startFromGoalTemplate={(t) => { store.startFromGoalTemplate(t); setShowingWorkout(true); goTo('log'); }}
+                onResume={resumeWorkout}
+                saveTemplate={store.saveTemplate}
+                deleteTemplate={store.deleteTemplate}
+              />
+            )}
+            {view === 'log' && (
+              <WorkoutLogger
+                activeWorkout={null}
+                workouts={store.workouts}
+                templates={store.templates}
+                startWorkout={store.startWorkout}
+                startFromTemplate={store.startFromTemplate}
+                startFromGoalTemplate={store.startFromGoalTemplate}
+                updateWorkoutName={store.updateWorkoutName}
+                finishWorkout={store.finishWorkout}
+                cancelWorkout={store.cancelWorkout}
+                deleteWorkout={store.deleteWorkout}
+                saveTemplate={store.saveTemplate}
+                deleteTemplate={store.deleteTemplate}
+                addExercise={store.addExercise}
+                removeExercise={store.removeExercise}
+                addSet={store.addSet}
+                updateSet={store.updateSet}
+                removeSet={store.removeSet}
+                onExit={() => navigate('dashboard')}
+                getPrevPerformance={store.getPrevPerformance}
+              />
+            )}
+            {view === 'library' && <ExerciseLibrary />}
+            {view === 'progress' && (
+              <ProgressCharts
+                workouts={store.workouts}
+                loggedExerciseIds={store.loggedExerciseIds}
+                getExerciseProgress={store.getExerciseProgress}
+              />
+            )}
+            {view === 'records' && (
+              <PersonalRecords personalRecords={store.personalRecords} />
+            )}
+          </>
         )}
       </main>
     </div>
