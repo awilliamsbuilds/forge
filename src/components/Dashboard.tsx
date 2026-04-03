@@ -278,23 +278,14 @@ export default function Dashboard({
 
       {/* Import */}
       <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-        <span className="forge-label" style={{ color: 'var(--muted)' }}>
-          {workouts.length > 0 ? `${workouts.length} sessions logged` : 'No workouts yet'}
-        </span>
-        <button className="btn-ghost px-4 py-2 text-sm" onClick={() => setShowImport(true)}>
-          Import from Strong
-        </button>
-      </div>
-
-      {/* Changelog link */}
-      <div className="flex justify-center pt-4">
         <button
           onClick={() => onNavigate('changelog')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--border)', transition: 'color 0.12s' }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--muted)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--border)')}
+          className="btn-ghost px-4 py-2 text-sm"
         >
           What's New
+        </button>
+        <button className="btn-ghost px-4 py-2 text-sm" onClick={() => setShowImport(true)}>
+          Import from Strong
         </button>
       </div>
 
