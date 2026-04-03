@@ -483,10 +483,15 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-function CalendarView({ workouts, onSelect }: { workouts: Workout[]; onSelect: (w: Workout) => void }) {
+function CalendarView({ workouts, onSelect, year, month, setYear, setMonth }: {
+  workouts: Workout[];
+  onSelect: (w: Workout) => void;
+  year: number;
+  month: number;
+  setYear: React.Dispatch<React.SetStateAction<number>>;
+  setMonth: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
   const [dayWorkouts, setDayWorkouts] = useState<Workout[] | null>(null);
 
   // Build a map of dateStr -> Workout[]
@@ -627,6 +632,9 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
 }) {
   const [selected, setSelected] = useState<Workout | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const today = new Date();
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth());
 
   if (selected) {
     // Check the workout still exists (might have been deleted)
@@ -694,7 +702,7 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
           </p>
         </div>
       ) : viewMode === 'calendar' ? (
-        <CalendarView workouts={workouts} onSelect={setSelected} />
+        <CalendarView workouts={workouts} onSelect={setSelected} year={calYear} month={calMonth} setYear={setCalYear} setMonth={setCalMonth} />
       ) : (
         <>
           <div className="mb-4">
