@@ -360,11 +360,14 @@ export const useWorkouts = () => {
 
   // Previous performance for an exercise (most recent workout)
   const getPrevPerformance = useCallback(
-    (exerciseId: string): WorkoutSet[] => {
-      const last = workouts.find(w =>
-        w.exercises.some(e => e.exerciseId === exerciseId)
-      );
-      return last?.exercises.find(e => e.exerciseId === exerciseId)?.sets ?? [];
+    (exerciseId: string, exerciseName?: string): WorkoutSet[] => {
+      const norm = (n: string) =>
+        n.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
+      const matches = (e: WorkoutExercise) =>
+        e.exerciseId === exerciseId ||
+        (exerciseName != null && norm(e.exerciseName) === norm(exerciseName));
+      const last = workouts.find(w => w.exercises.some(matches));
+      return last?.exercises.find(matches)?.sets ?? [];
     },
     [workouts]
   );

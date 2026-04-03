@@ -40,7 +40,7 @@ export default function App() {
 
       {/* Main content — desktop: offset for sidebar; mobile: offset for bottom nav */}
       <main className="lg:ml-[220px] min-h-screen pb-[64px] lg:pb-0">
-        {view === 'dashboard' && !store.activeWorkout && (
+        {view === 'dashboard' && (
           <Dashboard
             workouts={store.workouts}
             activeWorkout={store.activeWorkout}
@@ -53,7 +53,7 @@ export default function App() {
             deleteTemplate={store.deleteTemplate}
           />
         )}
-        {(view === 'log' || (view === 'dashboard' && !!store.activeWorkout)) && (
+        {view === 'log' && (
           <WorkoutLogger
             activeWorkout={store.activeWorkout}
             workouts={store.workouts}
@@ -72,6 +72,7 @@ export default function App() {
             addSet={store.addSet}
             updateSet={store.updateSet}
             removeSet={store.removeSet}
+            onExit={() => navigate('dashboard')}
             getPrevPerformance={store.getPrevPerformance}
           />
         )}

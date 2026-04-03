@@ -20,7 +20,8 @@ interface WorkoutLoggerProps {
   addSet: (exerciseId: string) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
   removeSet: (exerciseId: string, setId: string) => void;
-  getPrevPerformance: (exerciseId: string) => WorkoutSet[];
+  onExit: () => void;
+  getPrevPerformance: (exerciseId: string, exerciseName?: string) => WorkoutSet[];
 }
 
 // ── Number stepper ────────────────────────────────────────────────────────────
@@ -663,19 +664,20 @@ function RestRow({ colSpan, restSeconds, active, startedAt, onAdjust, onSkip }: 
 // ── Active workout view ───────────────────────────────────────────────────────
 
 function ActiveWorkoutView({
-  active, onFinish, onCancel, onNameChange,
+  active, onFinish, onCancel, onExit, onNameChange,
   onAddExercise, onRemoveExercise, onAddSet, onUpdateSet, onRemoveSet, getPrevPerformance,
 }: {
   active: ActiveWorkout;
   onFinish: () => void;
   onCancel: () => void;
+  onExit: () => void;
   onNameChange: (n: string) => void;
   onAddExercise: (e: Exercise) => void;
   onRemoveExercise: (id: string) => void;
   onAddSet: (id: string) => void;
   onUpdateSet: (exId: string, setId: string, u: Partial<WorkoutSet>) => void;
   onRemoveSet: (exId: string, setId: string) => void;
-  getPrevPerformance: (exerciseId: string) => WorkoutSet[];
+  getPrevPerformance: (exerciseId: string, exerciseName?: string) => WorkoutSet[];
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -710,7 +712,10 @@ function ActiveWorkoutView({
             </button>
           )}
           <div className="flex gap-2 flex-shrink-0 mt-1">
-            <button className="btn-ghost py-2 px-3" onClick={onCancel} style={{ fontSize: '0.75rem' }}>
+            <button className="btn-ghost py-2 px-3" onClick={onExit} style={{ fontSize: '0.75rem' }}>
+              ← Exit
+            </button>
+            <button className="btn-ghost py-2 px-3" onClick={onCancel} style={{ fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>
               Discard
             </button>
             <button
@@ -739,7 +744,7 @@ function ActiveWorkoutView({
       ) : (
         <div className="flex flex-col gap-4 mb-4">
           {active.exercises.map(ex => {
-            const prevSets = getPrevPerformance(ex.exerciseId);
+            const prevSets = getPrevPerformance(ex.exerciseId, ex.exerciseName);
             const allDone = ex.sets.length > 0 && ex.sets.every(s => s.completed);
             return (
               <div
@@ -816,7 +821,7 @@ function ActiveWorkoutView({
                               />
                             </td>
                             <td>
-                              <span className="forge-label" style={{ color: 'var(--muted)' }}>
+                              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.78rem', color: 'var(--dim)' }}>
                                 {prev ? `${prev.weight}×${prev.reps}` : '—'}
                               </span>
                             </td>
@@ -894,7 +899,7 @@ export default function WorkoutLogger({
   activeWorkout, workouts, templates, startWorkout, startFromTemplate, startFromGoalTemplate,
   updateWorkoutName, finishWorkout, cancelWorkout, deleteWorkout,
   saveTemplate, deleteTemplate,
-  addExercise, removeExercise, addSet, updateSet, removeSet, getPrevPerformance,
+  addExercise, removeExercise, addSet, updateSet, removeSet, onExit, getPrevPerformance,
 }: WorkoutLoggerProps) {
   const handleFinish = useCallback(() => {
     if (activeWorkout && activeWorkout.exercises.length === 0) return;
@@ -916,6 +921,7 @@ export default function WorkoutLogger({
       active={activeWorkout}
       onFinish={handleFinish}
       onCancel={cancelWorkout}
+      onExit={onExit}
       onNameChange={updateWorkoutName}
       onAddExercise={addExercise}
       onRemoveExercise={removeExercise}

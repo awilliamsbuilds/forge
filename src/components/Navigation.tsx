@@ -175,8 +175,8 @@ export default function Navigation({ currentView, onNavigate, hasActiveWorkout }
         {/* Center START button */}
         <div className="flex-shrink-0 flex items-center justify-center" style={{ width: '72px' }}>
           <button
-            onClick={() => onNavigate('dashboard')}
-            aria-label="Start workout"
+            onClick={() => onNavigate(hasActiveWorkout ? 'log' : 'dashboard')}
+            aria-label={hasActiveWorkout ? 'Resume workout' : 'Start workout'}
             style={{
               width: '52px',
               height: '52px',
