@@ -280,7 +280,9 @@ export default function Dashboard({
       <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border)' }}>
         <button
           onClick={() => onNavigate('changelog')}
-          className="btn-ghost px-4 py-2 text-sm"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
         >
           What's New
         </button>

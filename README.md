@@ -20,17 +20,19 @@ npm run preview   # preview production build
 
 ## Features
 
-- **Dashboard** — weekly stats (sessions, volume, streak), all-time totals, recent workout list
-- **Log Workout** — start a new workout, add exercises, log sets with weight × reps, live timer
-- **Templates** — saved workout templates (Push, Pull, Leg Day, etc.) with goal weights/reps per exercise; ordered by how long since you last did each one
-- **Exercise Library** — 36 exercises across 7 muscle groups with descriptions and muscle targets
-- **Progress** — SVG line charts for max weight and volume over time per exercise; weekly volume bar chart
-- **Personal Records** — auto-calculated from workout history using the Epley estimated 1RM formula
+- **Dashboard** — template cards with last-trained dates, 3-week training heatmap, active workout resume banner
+- **Log Workout** — start a new workout, add exercises, log sets with weight × reps, per-set rest timers with inline countdown
+- **Templates** — saved workout templates with goal weights/reps per exercise; ordered by longest since last trained
+- **Exercise Library** — 76 exercises across 7 muscle groups with descriptions and muscle targets; create custom exercises
+- **History** — list and calendar views; click any day or session to open the full workout detail; repeat any past workout
+- **Progress** — SVG line charts for max weight and volume over time per exercise
+- **Personal Records** — auto-calculated from workout history using the Epley estimated 1RM formula; PR badges shown inline during logging
+- **Changelog** — in-app release notes accessible from the dashboard
 
 ## Importing from Strong
 
 1. In the Strong app: **Settings → Export Data** → export as CSV
-2. On the Dashboard, tap **Import**
+2. On the Dashboard, tap **Import from Strong**
 3. Drop or select the `.csv` file
 4. Preview shows workout count, date range, and breakdown by workout type
 5. Confirm import — existing workouts are never duplicated (matched on full datetime + name)
@@ -41,19 +43,23 @@ Re-importing a newer Strong export is safe: only new workouts are added.
 
 ```
 src/
-  App.tsx                   # Root: view routing, nav state
+  App.tsx                   # Root: view routing, nav state, showingWorkout flag
   types/index.ts            # All TypeScript types
-  hooks/useWorkouts.ts      # Central state management + localStorage persistence
-  data/exercises.ts         # Exercise library (36 exercises, static)
+  hooks/
+    useWorkouts.ts          # Central state: workouts, active workout, templates
+    useCustomExercises.ts   # Custom exercise CRUD + localStorage persistence
+  data/exercises.ts         # Exercise library (76 exercises, static)
   utils/importStrong.ts     # Strong CSV parser
   components/
-    Navigation.tsx          # Sidebar (desktop always-open, mobile drawer)
-    Dashboard.tsx           # Stats overview + import trigger
-    WorkoutLogger.tsx       # New workout, templates, history, template editor
-    ExerciseLibrary.tsx     # Browse exercises
+    Navigation.tsx          # Sidebar (desktop) / bottom tab bar (mobile)
+    Dashboard.tsx           # Start workout hub: templates, heatmap, resume banner
+    WorkoutLogger.tsx       # Active workout, history (list + calendar), exercise picker
+    TemplateEditor.tsx      # Create/edit workout templates
+    ExerciseLibrary.tsx     # Browse + create custom exercises
     ProgressCharts.tsx      # SVG charts
     PersonalRecords.tsx     # PR table
     ImportModal.tsx         # Strong import flow
+    Changelog.tsx           # In-app release notes
     ui/LineChart.tsx        # Reusable SVG line chart
 ```
 
@@ -66,6 +72,7 @@ All data lives in `localStorage` under these keys:
 | `forge_workouts` | `Workout[]` — completed sessions, newest first |
 | `forge_active` | `ActiveWorkout \| null` — in-progress session |
 | `forge_templates` | `WorkoutTemplate[]` — editable goal templates |
+| `forge_custom_exercises` | `Exercise[]` — user-created exercises |
 
 ## Design
 

@@ -23,10 +23,13 @@ Always run `npm run build` after changes to catch TypeScript errors before calli
 | File | Role |
 |------|------|
 | `src/hooks/useWorkouts.ts` | All state: workouts, active workout, templates. CRUD + computed values (PRs, weekly stats, exercise progress). |
+| `src/hooks/useCustomExercises.ts` | Custom exercise CRUD. Reads/writes `forge_custom_exercises` in localStorage. |
 | `src/types/index.ts` | Single source of truth for all types. Edit here first when changing data shapes. |
 | `src/utils/importStrong.ts` | Strong CSV parser. Converts rows → `Workout[]`. Handles quoted fields, duration parsing (`"1h 5m"` → 65), and exercise category inference from name keywords. |
-| `src/data/exercises.ts` | Static exercise library (36 exercises). `EXERCISE_MAP` for O(1) lookup by ID. |
-| `src/components/WorkoutLogger.tsx` | Largest component. Contains: `TemplateEditor`, `TemplatesSection`, `HistoryRow`, `StartScreen`, `ActiveWorkoutView`, `ExercisePicker`, `Stepper`, `Timer`. |
+| `src/data/exercises.ts` | Static exercise library (76 exercises). `EXERCISE_MAP` for O(1) lookup by ID. |
+| `src/components/WorkoutLogger.tsx` | Largest component. Contains: `StartScreen` (list+calendar history), `ActiveWorkoutView`, `ExercisePicker`, `Timer`. |
+| `src/components/TemplateEditor.tsx` | Create/edit workout templates with goal weights and reps. |
+| `src/components/Changelog.tsx` | In-app release notes, timeline layout. Linked from dashboard as "What's New". |
 
 ## Data shapes
 
@@ -40,11 +43,11 @@ ActiveWorkout { ...same fields, startTime (ms timestamp), no duration }
 // Editable template with goal sets (stored in forge_templates)
 WorkoutTemplate { id, name, exercises: TemplateExercise[] }
 TemplateExercise { id, exerciseId, exerciseName, category, sets: TemplateSet[] }
-TemplateSet { id, weight, reps }  // no `completed` field
+TemplateSet { id, weight, reps, restSeconds }  // no `completed` field
 
 // Exercise in a workout
 WorkoutExercise { id, exerciseId, exerciseName, category, sets: WorkoutSet[] }
-WorkoutSet { id, reps, weight, completed }
+WorkoutSet { id, reps, weight, completed, restSeconds }  // rest after this set (default 90s)
 ```
 
 ## localStorage keys
@@ -54,6 +57,7 @@ WorkoutSet { id, reps, weight, completed }
 | `forge_workouts` | `Workout[]` | Sorted newest-first. |
 | `forge_active` | `ActiveWorkout \| null` | Cleared on finish/cancel. |
 | `forge_templates` | `WorkoutTemplate[]` | Seeded from history on first run. |
+| `forge_custom_exercises` | `Exercise[]` | User-created exercises. Managed by `useCustomExercises`. |
 
 ## Patterns
 
