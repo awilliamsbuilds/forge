@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { MuscleGroup } from '../types';
 import { EXERCISES } from '../data/exercises';
 import { useCustomExercises } from '../hooks/useCustomExercises';
@@ -24,6 +24,11 @@ export default function ExerciseLibrary() {
   const [newName, setNewName] = useState('');
   const [newCat, setNewCat] = useState<MuscleGroup>('chest');
   const [newEquip, setNewEquip] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (creating) nameInputRef.current?.focus({ preventScroll: true });
+  }, [creating]);
   const { customs, createExercise } = useCustomExercises();
 
   const allExercises = useMemo(() => [...EXERCISES, ...customs], [customs]);
@@ -181,11 +186,11 @@ export default function ExerciseLibrary() {
               <div>
                 <div className="forge-label mb-1.5">Exercise Name *</div>
                 <input
+                  ref={nameInputRef}
                   className="forge-input"
                   placeholder="e.g. Cable Lateral Raise"
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
                 />
               </div>
