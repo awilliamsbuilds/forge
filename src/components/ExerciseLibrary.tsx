@@ -51,6 +51,7 @@ export default function ExerciseLibrary() {
   };
 
   return (
+    <>
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
       {/* Header */}
       <div className="mb-6">
@@ -174,64 +175,66 @@ export default function ExerciseLibrary() {
         </div>
       )}
 
-      {/* Create custom exercise modal */}
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }} onClick={() => setCreating(false)}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', width: 'min(480px, 95vw)', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-              <h2 className="forge-display text-2xl">CREATE EXERCISE</h2>
-              <button onClick={() => setCreating(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+    </div>
+
+    {/* Create custom exercise modal — outside animate-fade-up so fixed positioning works */}
+    {creating && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.8)' }} onClick={() => setCreating(false)}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', width: 'min(480px, 95vw)', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h2 className="forge-display text-2xl">CREATE EXERCISE</h2>
+            <button onClick={() => setCreating(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+          </div>
+          <div className="flex flex-col gap-4 p-5">
+            <div>
+              <div className="forge-label mb-1.5">Exercise Name *</div>
+              <input
+                ref={nameInputRef}
+                className="forge-input"
+                placeholder="e.g. Cable Lateral Raise"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+              />
             </div>
-            <div className="flex flex-col gap-4 p-5">
-              <div>
-                <div className="forge-label mb-1.5">Exercise Name *</div>
-                <input
-                  ref={nameInputRef}
-                  className="forge-input"
-                  placeholder="e.g. Cable Lateral Raise"
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
-                />
-              </div>
-              <div>
-                <div className="forge-label mb-1.5">Category *</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {MUSCLE_CATS.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => setNewCat(c.id)}
-                      style={{
-                        fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.68rem',
-                        letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.25rem 0.6rem',
-                        border: `1px solid ${newCat === c.id ? 'var(--accent)' : 'var(--border)'}`,
-                        background: newCat === c.id ? 'rgba(200,255,0,0.1)' : 'transparent',
-                        color: newCat === c.id ? 'var(--accent)' : 'var(--dim)', cursor: 'pointer',
-                      }}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="forge-label mb-1.5">Equipment <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span></div>
-                <input
-                  className="forge-input"
-                  placeholder="e.g. Cable Machine, Rope"
-                  value={newEquip}
-                  onChange={e => setNewEquip(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
-                />
+            <div>
+              <div className="forge-label mb-1.5">Category *</div>
+              <div className="flex flex-wrap gap-1.5">
+                {MUSCLE_CATS.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => setNewCat(c.id)}
+                    style={{
+                      fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.68rem',
+                      letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.25rem 0.6rem',
+                      border: `1px solid ${newCat === c.id ? 'var(--accent)' : 'var(--border)'}`,
+                      background: newCat === c.id ? 'rgba(200,255,0,0.1)' : 'transparent',
+                      color: newCat === c.id ? 'var(--accent)' : 'var(--dim)', cursor: 'pointer',
+                    }}
+                  >
+                    {c.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="flex gap-3 px-5 pb-5">
-              <button className="btn-ghost flex-1 py-3" onClick={() => setCreating(false)}>Cancel</button>
-              <button className="btn-accent flex-1 py-3" onClick={handleCreate} disabled={!newName.trim()}>Save Exercise</button>
+            <div>
+              <div className="forge-label mb-1.5">Equipment <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optional)</span></div>
+              <input
+                className="forge-input"
+                placeholder="e.g. Cable Machine, Rope"
+                value={newEquip}
+                onChange={e => setNewEquip(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
+              />
             </div>
           </div>
+          <div className="flex gap-3 px-5 pb-5">
+            <button className="btn-ghost flex-1 py-3" onClick={() => setCreating(false)}>Cancel</button>
+            <button className="btn-accent flex-1 py-3" onClick={handleCreate} disabled={!newName.trim()}>Save Exercise</button>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+    </>
   );
 }
