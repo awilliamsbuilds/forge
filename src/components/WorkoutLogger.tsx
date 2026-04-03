@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ActiveWorkout, Exercise, Workout, WorkoutSet, MuscleGroup, WorkoutTemplate } from '../types';
 import { EXERCISES } from '../data/exercises';
 
@@ -478,6 +478,146 @@ function WorkoutDetail({ workout, allWorkouts, onBack, onRepeat, onDelete }: {
   );
 }
 
+// ── Calendar view ────────────────────────────────────────────────────────────
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function CalendarView({ workouts, onSelect }: { workouts: Workout[]; onSelect: (w: Workout) => void }) {
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+  const [dayWorkouts, setDayWorkouts] = useState<Workout[] | null>(null);
+
+  // Build a map of dateStr -> Workout[]
+  const byDay = useMemo(() => {
+    const m = new Map<string, Workout[]>();
+    for (const w of workouts) {
+      const key = w.date.slice(0, 10);
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(w);
+    }
+    return m;
+  }, [workouts]);
+
+  const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
+  const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
+
+  // Grid cells: pad start of month to correct day-of-week
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  // Pad to full weeks
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const handleDayClick = (day: number) => {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const ws = byDay.get(key);
+    if (!ws || ws.length === 0) return;
+    if (ws.length === 1) { onSelect(ws[0]); return; }
+    setDayWorkouts(ws);
+  };
+
+  return (
+    <div>
+      {/* Month nav */}
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer', padding: '0.25rem 0.5rem', fontSize: '1.1rem' }}>‹</button>
+        <span className="forge-display text-2xl">{MONTH_NAMES[month].toUpperCase()} {year}</span>
+        <button
+          onClick={nextMonth}
+          disabled={year === today.getFullYear() && month === today.getMonth()}
+          style={{ background: 'none', border: 'none', color: (year === today.getFullYear() && month === today.getMonth()) ? 'var(--border)' : 'var(--dim)', cursor: 'pointer', padding: '0.25rem 0.5rem', fontSize: '1.1rem' }}
+        >›</button>
+      </div>
+
+      {/* Day labels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '0.35rem' }}>
+        {DAY_LABELS.map(d => (
+          <div key={d} style={{ textAlign: 'center', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--muted)', paddingBottom: '0.25rem' }}>
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={`empty-${i}`} />;
+          const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const ws = byDay.get(key) ?? [];
+          const hasWorkout = ws.length > 0;
+          const isToday = key === todayStr;
+          const isFuture = key > todayStr;
+
+          return (
+            <button
+              key={key}
+              onClick={() => hasWorkout && handleDayClick(day)}
+              style={{
+                aspectRatio: '1',
+                background: hasWorkout ? 'rgba(200,255,0,0.12)' : 'var(--card)',
+                border: isToday ? '1px solid var(--accent)' : '1px solid var(--border)',
+                color: isFuture ? 'var(--border)' : hasWorkout ? 'var(--accent)' : 'var(--dim)',
+                cursor: hasWorkout ? 'pointer' : 'default',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '2px',
+                padding: '0.15rem',
+                transition: 'background 0.1s',
+                position: 'relative',
+              }}
+              onMouseEnter={e => { if (hasWorkout) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,255,0,0.22)'; }}
+              onMouseLeave={e => { if (hasWorkout) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(200,255,0,0.12)'; }}
+            >
+              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 'clamp(0.6rem, 2vw, 0.8rem)', fontWeight: 700, lineHeight: 1 }}>
+                {day}
+              </span>
+              {ws.length > 1 && (
+                <span style={{ fontFamily: 'Barlow Condensed, sans-serif', fontSize: '0.5rem', letterSpacing: '0.05em', color: 'var(--accent)', lineHeight: 1 }}>
+                  ×{ws.length}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Multi-workout day picker */}
+      {dayWorkouts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }} onClick={() => setDayWorkouts(null)}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', width: 'min(320px, 90vw)', maxHeight: '60vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <span className="forge-display text-xl">SELECT WORKOUT</span>
+              <button onClick={() => setDayWorkouts(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+            </div>
+            <div className="overflow-y-auto">
+              {dayWorkouts.map(w => (
+                <button key={w.id} onClick={() => { setDayWorkouts(null); onSelect(w); }}
+                  className="w-full text-left px-4 py-3"
+                  style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}>{w.name}</div>
+                  <div className="forge-label mt-0.5">{w.duration}min · {w.exercises.length} exercises</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Log screen (no active workout): history ──────────────────────────────────
 
 function StartScreen({ workouts, onTemplate, onDelete }: {
@@ -486,6 +626,7 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const [selected, setSelected] = useState<Workout | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   if (selected) {
     // Check the workout still exists (might have been deleted)
@@ -503,9 +644,46 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
-      <div className="mb-6">
-        <div className="forge-label mb-1">Your training log</div>
-        <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl">HISTORY</h1>
+      {/* Header */}
+      <div className="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <div className="forge-label mb-1">Your training log</div>
+          <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl">HISTORY</h1>
+        </div>
+        {workouts.length > 0 && (
+          <div className="flex flex-shrink-0 mb-1" style={{ border: '1px solid var(--border)' }}>
+            {(['list', 'calendar'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                style={{
+                  background: viewMode === mode ? 'var(--accent)' : 'transparent',
+                  border: 'none',
+                  color: viewMode === mode ? '#080808' : 'var(--dim)',
+                  fontFamily: 'Barlow Condensed, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  padding: '0.4rem 0.75rem',
+                  cursor: 'pointer',
+                  transition: 'background 0.12s, color 0.12s',
+                }}
+              >
+                {mode === 'list' ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                    <rect x="3" y="4" width="18" height="18" rx="0"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {workouts.length === 0 ? (
@@ -515,6 +693,8 @@ function StartScreen({ workouts, onTemplate, onDelete }: {
             Start a workout from the Dashboard.
           </p>
         </div>
+      ) : viewMode === 'calendar' ? (
+        <CalendarView workouts={workouts} onSelect={setSelected} />
       ) : (
         <>
           <div className="mb-4">
