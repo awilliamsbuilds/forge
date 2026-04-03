@@ -190,29 +190,62 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
                 </div>
                 <button onClick={() => removeExercise(ex.id)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0.25rem 0.5rem', flexShrink: 0 }}>✕</button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="forge-table" style={{ minWidth: '380px' }}>
-                  <colgroup>
-                    <col style={{ width: '2.25rem' }} /><col /><col /><col style={{ width: '5rem' }} /><col style={{ width: '2rem' }} />
-                  </colgroup>
-                  <thead>
-                    <tr><th>#</th><th>Goal Weight (lbs)</th><th>Goal Reps</th><th style={{ textAlign: 'center' }}>Rest</th><th></th></tr>
-                  </thead>
-                  <tbody>
-                    {ex.sets.map((s, idx) => (
+              <table className="forge-table" style={{ width: '100%' }}>
+                <colgroup>
+                  <col style={{ width: '1.75rem' }} />
+                  <col />
+                  <col style={{ width: '4.5rem' }} />
+                  <col style={{ width: '5.5rem' }} />
+                  <col style={{ width: '1.5rem' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Weight (lbs)</th>
+                    <th style={{ textAlign: 'center' }}>Reps</th>
+                    <th style={{ textAlign: 'center' }}>Rest</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ex.sets.map((s, idx) => {
+                    const inputBase: React.CSSProperties = {
+                      width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
+                      color: 'var(--text)', fontFamily: 'Space Mono, monospace', fontSize: '0.9rem',
+                      textAlign: 'center', padding: '0.35rem 0.25rem', outline: 'none',
+                    };
+                    return (
                       <tr key={s.id}>
                         <td><span className="forge-stat text-sm" style={{ color: 'var(--muted)' }}>{idx + 1}</span></td>
-                        <td><Stepper value={s.weight} onChange={v => updateSet(ex.id, s.id, { weight: v })} step={2.5} min={0} decimals={1} /></td>
-                        <td><Stepper value={s.reps} onChange={v => updateSet(ex.id, s.id, { reps: v })} step={1} min={1} /></td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+                          <input
+                            type="number" inputMode="decimal"
+                            value={s.weight || ''} placeholder="0"
+                            style={inputBase}
+                            onChange={e => updateSet(ex.id, s.id, { weight: parseFloat(e.target.value) || 0 })}
+                            onFocus={e => { e.target.select(); e.target.style.borderColor = 'var(--accent)'; }}
+                            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number" inputMode="numeric"
+                            value={s.reps || ''} placeholder="0"
+                            style={inputBase}
+                            onChange={e => updateSet(ex.id, s.id, { reps: parseInt(e.target.value) || 0 })}
+                            onFocus={e => { e.target.select(); e.target.style.borderColor = 'var(--accent)'; }}
+                            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+                          />
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem' }}>
                             <button onClick={() => updateSet(ex.id, s.id, { restSeconds: Math.max(15, (s.restSeconds ?? 90) - 15) })}
-                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.75rem' }}>−</button>
+                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.2rem', fontSize: '0.8rem', lineHeight: 1 }}>−</button>
                             <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: 'var(--accent)', minWidth: '2rem', textAlign: 'center' }}>
                               {fmtRest(s.restSeconds ?? 90)}
                             </span>
                             <button onClick={() => updateSet(ex.id, s.id, { restSeconds: (s.restSeconds ?? 90) + 15 })}
-                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.25rem', fontSize: '0.75rem' }}>+</button>
+                              style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0 0.2rem', fontSize: '0.8rem', lineHeight: 1 }}>+</button>
                           </div>
                         </td>
                         <td>
@@ -221,10 +254,10 @@ export default function TemplateEditor({ initial, onSave, onCancel }: {
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    );
+                  })}
+                </tbody>
+              </table>
               <div className="px-4 py-3">
                 <button className="btn-ghost w-full py-2" style={{ fontSize: '0.75rem' }} onClick={() => addSet(ex.id)}>+ Add Set</button>
               </div>
