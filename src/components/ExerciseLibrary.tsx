@@ -48,25 +48,25 @@ export default function ExerciseLibrary() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 animate-fade-up">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <div className="forge-label mb-1">Browse & Learn</div>
-          <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl mb-4">EXERCISE LIBRARY</h1>
-          <input
-            className="forge-input"
-            placeholder="Search exercises or muscles..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ maxWidth: '400px' }}
-          />
+      <div className="mb-6">
+        <div className="forge-label mb-1">Browse & Learn</div>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <h1 className="forge-display text-4xl sm:text-5xl lg:text-6xl">EXERCISE LIBRARY</h1>
+          <button
+            className="btn-accent flex-shrink-0 py-2 px-4"
+            style={{ fontSize: '0.75rem' }}
+            onClick={() => { setNewName(search); setNewCat('chest'); setNewEquip(''); setCreating(true); }}
+          >
+            + Create
+          </button>
         </div>
-        <button
-          className="btn-accent flex-shrink-0 py-2 px-4 mt-8"
-          style={{ fontSize: '0.75rem' }}
-          onClick={() => { setNewName(search); setNewCat('chest'); setNewEquip(''); setCreating(true); }}
-        >
-          + Create
-        </button>
+        <input
+          className="forge-input"
+          placeholder="Search exercises or muscles..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ maxWidth: '400px' }}
+        />
       </div>
 
       {/* Category filter */}
