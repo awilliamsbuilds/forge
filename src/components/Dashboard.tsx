@@ -286,6 +286,18 @@ export default function Dashboard({
         </button>
       </div>
 
+      {/* Changelog link */}
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={() => onNavigate('changelog')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--border)', transition: 'color 0.12s' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--muted)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--border)')}
+        >
+          What's New
+        </button>
+      </div>
+
       {showImport && <ImportModal onClose={() => setShowImport(false)} onImport={onImport} />}
     </div>
   );

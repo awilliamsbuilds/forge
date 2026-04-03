@@ -7,6 +7,7 @@ import WorkoutLogger from './components/WorkoutLogger';
 import ExerciseLibrary from './components/ExerciseLibrary';
 import ProgressCharts from './components/ProgressCharts';
 import PersonalRecords from './components/PersonalRecords';
+import Changelog from './components/Changelog';
 
 const VIEWS: View[] = ['dashboard', 'log', 'library', 'progress', 'records'];
 
@@ -125,6 +126,9 @@ export default function App() {
             )}
             {view === 'records' && (
               <PersonalRecords personalRecords={store.personalRecords} />
+            )}
+            {view === 'changelog' && (
+              <Changelog onNavigate={navigate} />
             )}
           </>
         )}

@@ -7,7 +7,7 @@ export type MuscleGroup =
   | 'core'
   | 'cardio';
 
-export type View = 'dashboard' | 'log' | 'library' | 'progress' | 'records';
+export type View = 'dashboard' | 'log' | 'library' | 'progress' | 'records' | 'changelog';
 
 export interface Exercise {
   id: string;
