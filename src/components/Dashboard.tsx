@@ -42,7 +42,7 @@ function MiniHeatmap({ workouts }: { workouts: Workout[] }) {
     startDate.setDate(startOfCurrentWeek.getDate() - 14);
 
     return Array.from({ length: 21 }, (_, i) => {
-      const row = Math.floor(i / 7);
+      const row = 2 - Math.floor(i / 7);
       const col = i % 7;
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
