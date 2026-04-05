@@ -9,8 +9,8 @@ import {
   ExerciseProgress,
   WeeklyStats,
   WorkoutTemplate,
-  TemplateExercise,
 } from '../types';
+import { SEED_TEMPLATES } from '../data/seedTemplates';
 
 const uid = () => Math.random().toString(36).slice(2, 11);
 
@@ -35,29 +35,12 @@ const WORKOUTS_KEY  = 'forge_workouts';
 const ACTIVE_KEY    = 'forge_active';
 const TEMPLATES_KEY = 'forge_templates';
 
-const DEFAULT_TEMPLATE_NAMES = ['Push', 'Pull', 'Leg Day', 'Fireman Carry', 'Core & Biceps'];
-
-/** On first run, seed templates from the most recent matching workout in history. */
+/** On first run, seed templates from the committed seed file. */
 const initTemplates = (): WorkoutTemplate[] => {
   const stored = load<WorkoutTemplate[] | null>(TEMPLATES_KEY, null);
   if (stored !== null) return stored;
-
-  const workouts = load<Workout[]>(WORKOUTS_KEY, []);
-  const seeded = DEFAULT_TEMPLATE_NAMES.map(name => {
-    const last = workouts.find(w => w.name === name);
-    const exercises: TemplateExercise[] = last
-      ? last.exercises.map(ex => ({
-          id: uid(),
-          exerciseId: ex.exerciseId,
-          exerciseName: ex.exerciseName,
-          category: ex.category,
-          sets: ex.sets.map(s => ({ id: uid(), weight: s.weight, reps: s.reps, restSeconds: s.restSeconds ?? 90 })),
-        }))
-      : [];
-    return { id: uid(), name, exercises };
-  });
-  save(TEMPLATES_KEY, seeded);
-  return seeded;
+  save(TEMPLATES_KEY, SEED_TEMPLATES);
+  return SEED_TEMPLATES;
 };
 
 export const useWorkouts = () => {
