@@ -35,17 +35,17 @@ function Stepper({ label, value, onChange, min = 1, step = 1, format }: {
       <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>
         {label}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
         <button
           onClick={() => onChange(Math.max(min, value - step))}
-          style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', width: 28, height: 28, cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >−</button>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)', minWidth: '3rem', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '1rem', fontWeight: 700, color: 'var(--text)', minWidth: '2.6rem', textAlign: 'center' }}>
           {display}
         </div>
         <button
           onClick={() => onChange(value + step)}
-          style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', width: 28, height: 28, cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >+</button>
       </div>
     </div>
@@ -265,7 +265,7 @@ function IntervalTimer() {
   if (iState === 'setup') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
           <Stepper label="Reps" value={reps} onChange={setReps} min={1} />
           <Stepper label="Hold" value={holdSecs} onChange={setHoldSecs} min={5} step={5} format={fmt} />
           <Stepper label="Rest" value={restSecs} onChange={setRestSecs} min={5} step={5} format={fmt} />
