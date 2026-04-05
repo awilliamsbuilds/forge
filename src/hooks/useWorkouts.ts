@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Workout,
   ActiveWorkout,
@@ -11,6 +11,7 @@ import {
   WorkoutTemplate,
 } from '../types';
 import { SEED_TEMPLATES } from '../data/seedTemplates';
+import { loadFromServer, saveToServer } from '../api';
 
 const uid = () => Math.random().toString(36).slice(2, 11);
 
@@ -29,6 +30,12 @@ const save = (key: string, value: unknown) => {
   } catch {
     // ignore storage errors
   }
+};
+
+// Write to localStorage and server in one call
+const sync = (key: string, value: unknown) => {
+  save(key, value);
+  saveToServer(key, value);
 };
 
 const WORKOUTS_KEY  = 'forge_workouts';
@@ -54,16 +61,44 @@ export const useWorkouts = () => {
 
   const setWorkouts = useCallback((w: Workout[]) => {
     setWorkoutsRaw(w);
-    save(WORKOUTS_KEY, w);
+    sync(WORKOUTS_KEY, w);
   }, []);
 
   const setActive = useCallback((aw: ActiveWorkout | null) => {
     setActiveRaw(aw);
     if (aw) {
-      save(ACTIVE_KEY, aw);
+      sync(ACTIVE_KEY, aw);
     } else {
       localStorage.removeItem(ACTIVE_KEY);
+      saveToServer(ACTIVE_KEY, null);
     }
+  }, []);
+
+  // ── Server hydration (runs once on mount) ────────────────────────────────
+  useEffect(() => {
+    Promise.all([
+      loadFromServer<Workout[]>(WORKOUTS_KEY),
+      loadFromServer<WorkoutTemplate[]>(TEMPLATES_KEY),
+      loadFromServer<ActiveWorkout | null>(ACTIVE_KEY),
+    ]).then(([w, t, a]) => {
+      if (w.found && w.value) {
+        save(WORKOUTS_KEY, w.value);
+        setWorkoutsRaw(w.value);
+      }
+      if (t.found && t.value) {
+        save(TEMPLATES_KEY, t.value);
+        setTemplatesRaw(t.value);
+      }
+      if (a.found) {
+        if (a.value) {
+          save(ACTIVE_KEY, a.value);
+          setActiveRaw(a.value);
+        } else {
+          localStorage.removeItem(ACTIVE_KEY);
+          setActiveRaw(null);
+        }
+      }
+    });
   }, []);
 
   // ── Workout lifecycle ──────────────────────────────────────────────────────
@@ -139,10 +174,11 @@ export const useWorkouts = () => {
       };
       setWorkoutsRaw(prev => {
         const next = [completed, ...prev];
-        save(WORKOUTS_KEY, next);
+        sync(WORKOUTS_KEY, next);
         return next;
       });
       localStorage.removeItem(ACTIVE_KEY);
+      saveToServer(ACTIVE_KEY, null);
       return null;
     });
   }, []);
@@ -368,7 +404,7 @@ export const useWorkouts = () => {
     setTemplatesRaw(prev => {
       const exists = prev.some(x => x.id === t.id);
       const next = exists ? prev.map(x => x.id === t.id ? t : x) : [...prev, t];
-      save(TEMPLATES_KEY, next);
+      sync(TEMPLATES_KEY, next);
       return next;
     });
   }, []);
@@ -376,7 +412,7 @@ export const useWorkouts = () => {
   const deleteTemplate = useCallback((id: string) => {
     setTemplatesRaw(prev => {
       const next = prev.filter(t => t.id !== id);
-      save(TEMPLATES_KEY, next);
+      sync(TEMPLATES_KEY, next);
       return next;
     });
   }, []);
@@ -398,7 +434,7 @@ export const useWorkouts = () => {
       const merged = [...novel, ...workouts].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      setWorkouts(merged);
+      setWorkouts(merged); // setWorkouts calls sync internally
       return novel.length;
     },
     [workouts, setWorkouts]

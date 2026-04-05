@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Exercise, MuscleGroup } from '../types';
+import { loadFromServer, saveToServer } from '../api';
 
 const KEY = 'forge_custom_exercises';
 
-const load = (): Exercise[] => {
+const loadLocal = (): Exercise[] => {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? '[]');
   } catch {
@@ -12,7 +13,17 @@ const load = (): Exercise[] => {
 };
 
 export function useCustomExercises() {
-  const [customs, setCustoms] = useState<Exercise[]>(load);
+  const [customs, setCustoms] = useState<Exercise[]>(loadLocal);
+
+  // Hydrate from server on mount
+  useEffect(() => {
+    loadFromServer<Exercise[]>(KEY).then(result => {
+      if (result.found && result.value && result.value.length > 0) {
+        localStorage.setItem(KEY, JSON.stringify(result.value));
+        setCustoms(result.value);
+      }
+    });
+  }, []);
 
   const createExercise = useCallback((
     name: string,
@@ -31,6 +42,7 @@ export function useCustomExercises() {
     setCustoms(prev => {
       const next = [...prev, ex];
       localStorage.setItem(KEY, JSON.stringify(next));
+      saveToServer(KEY, next);
       return next;
     });
     return ex;
