@@ -54,7 +54,7 @@ export default function App() {
       />
 
       {/* Main content — desktop: offset for sidebar; mobile: offset for bottom nav */}
-      <main className="lg:ml-[220px] min-h-screen pb-[64px] lg:pb-0">
+      <main className="lg:ml-[220px] min-h-screen pb-[72px] lg:pb-0">
         {showingWorkout && store.activeWorkout ? (
           <WorkoutLogger
             activeWorkout={store.activeWorkout}

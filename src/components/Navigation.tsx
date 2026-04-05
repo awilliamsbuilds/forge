@@ -139,10 +139,10 @@ export default function Navigation({ currentView, onNavigate, hasActiveWorkout, 
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center"
         style={{
-          height: '64px',
+          height: '72px',
+          paddingBottom: '8px',
           background: 'var(--surface)',
           borderTop: '1px solid var(--border)',
-          paddingBottom: '8px',
         }}
       >
         {/* Left items */}
