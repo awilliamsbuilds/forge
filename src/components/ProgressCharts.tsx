@@ -208,9 +208,10 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
         map.set(key, (map.get(key) ?? 0) + vol);
       });
 
-    const bars = Array.from(map.entries())
+    const allBars = Array.from(map.entries())
       .map(([label, value]) => ({ label, value: Math.round(value) }))
-      .slice(-16);
+      .reverse(); // workouts stored newest-first; reverse so oldest→newest (left→right)
+    const bars = range === 'all' ? allBars : allBars.slice(-16);
 
     const WINDOW = 4;
     const rollingAvg = bars.map((_, i) => {
@@ -252,15 +253,19 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
           const w = segW - 8;
           const y = BOTTOM - barH;
           const isH = hovered === i;
+          const labelStride = bars.length > 24 ? 4 : bars.length > 12 ? 2 : 1;
+          const showLabel = i % labelStride === 0;
           return (
             <g key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}>
               <rect x={x} y={y} width={w} height={barH}
                 fill={isH ? '#C8FF00' : 'rgba(200,255,0,0.3)'}
                 style={{ transition: 'fill 0.1s' }}
               />
+              {showLabel && (
               <text x={x + w / 2} y={VBH - 5} textAnchor="middle" fontSize="9" fill="#4A4A4A" fontFamily="Space Mono, monospace">
                 {d.label}
               </text>
+              )}
               {isH && d.value > 0 && (
                 <text x={x + w / 2} y={y - 5} textAnchor="middle" fontSize="10" fill="#C8FF00"
                   fontFamily="Space Mono, monospace" fontWeight="700">
