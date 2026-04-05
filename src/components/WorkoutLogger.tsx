@@ -1011,7 +1011,7 @@ function ActiveWorkoutView({
           <button
             onClick={() => setShowWorkoutTimer(true)}
             title="Workout Timer"
-            style={{ marginLeft: 'auto', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
             onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
           >
