@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ActiveWorkout, Exercise, Workout, WorkoutSet, MuscleGroup, WorkoutTemplate } from '../types';
 import { EXERCISES } from '../data/exercises';
 import { useCustomExercises } from '../hooks/useCustomExercises';
@@ -850,6 +850,9 @@ interface ActiveTimer {
 const fmtRest = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 // Inline rest row — appears after every set in the table
+import { playChime } from '../utils/chime';
+import WorkoutTimerModal from './WorkoutTimerModal';
+
 function RestRow({ colSpan, restSeconds, active, startedAt, onAdjust, onSkip }: {
   colSpan: number;
   restSeconds: number;
@@ -864,10 +867,17 @@ function RestRow({ colSpan, restSeconds, active, startedAt, onAdjust, onSkip }: 
       : restSeconds
   );
 
+  const chimeFired = useRef(false);
+
   useEffect(() => {
-    if (!active || !startedAt) { setRemaining(restSeconds); return; }
+    if (!active || !startedAt) { setRemaining(restSeconds); chimeFired.current = false; return; }
     const id = setInterval(() => {
-      setRemaining(Math.max(0, restSeconds - Math.floor((Date.now() - startedAt) / 1000)));
+      const r = Math.max(0, restSeconds - Math.floor((Date.now() - startedAt) / 1000));
+      setRemaining(r);
+      if (r === 0 && !chimeFired.current) {
+        chimeFired.current = true;
+        playChime();
+      }
     }, 250);
     return () => clearInterval(id);
   }, [active, startedAt, restSeconds]);
@@ -959,6 +969,7 @@ function ActiveWorkoutView({
   const [showPicker, setShowPicker] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
+  const [showWorkoutTimer, setShowWorkoutTimer] = useState(false);
 
   const completedSets = active.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.completed).length, 0);
   const totalSets = active.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
@@ -997,6 +1008,18 @@ function ActiveWorkoutView({
           <Timer startTime={active.startTime} />
           <span style={{ color: 'var(--border)' }}>·</span>
           <span className="forge-label">{completedSets}/{totalSets} sets done</span>
+          <button
+            onClick={() => setShowWorkoutTimer(true)}
+            title="Workout Timer"
+            style={{ marginLeft: 'auto', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12 7 12 12 15 15" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -1190,6 +1213,9 @@ function ActiveWorkoutView({
 
       {showPicker && (
         <ExercisePicker onSelect={onAddExercise} onClose={() => setShowPicker(false)} />
+      )}
+      {showWorkoutTimer && (
+        <WorkoutTimerModal onClose={() => setShowWorkoutTimer(false)} />
       )}
     </div>
   );
