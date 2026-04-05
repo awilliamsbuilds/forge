@@ -142,6 +142,7 @@ export default function Navigation({ currentView, onNavigate, hasActiveWorkout, 
           height: '64px',
           background: 'var(--surface)',
           borderTop: '1px solid var(--border)',
+          paddingBottom: '8px',
         }}
       >
         {/* Left items */}
