@@ -850,34 +850,8 @@ interface ActiveTimer {
 const fmtRest = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 // Inline rest row — appears after every set in the table
-function playChime() {
-  try {
-    const ctx = new AudioContext();
-    const now = ctx.currentTime;
-
-    const tone = (freq: number, vol: number, delay: number) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, now + delay);
-      gain.gain.linearRampToValueAtTime(vol, now + delay + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 1.8);
-      osc.start(now + delay);
-      osc.stop(now + delay + 1.8);
-    };
-
-    // Soft two-note chime: C5 then E5, each with a harmonic overtone
-    tone(523.25, 0.28, 0);      // C5
-    tone(1046.5, 0.10, 0);      // C6 (overtone)
-    tone(659.25, 0.22, 0.18);   // E5 (slightly delayed)
-    tone(1318.5, 0.08, 0.18);   // E6 (overtone)
-  } catch {
-    // AudioContext unavailable — silently skip
-  }
-}
+import { playChime } from '../utils/chime';
+import WorkoutTimerModal from './WorkoutTimerModal';
 
 function RestRow({ colSpan, restSeconds, active, startedAt, onAdjust, onSkip }: {
   colSpan: number;
@@ -995,6 +969,7 @@ function ActiveWorkoutView({
   const [showPicker, setShowPicker] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
+  const [showWorkoutTimer, setShowWorkoutTimer] = useState(false);
 
   const completedSets = active.exercises.reduce((acc, ex) => acc + ex.sets.filter(s => s.completed).length, 0);
   const totalSets = active.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
@@ -1033,6 +1008,18 @@ function ActiveWorkoutView({
           <Timer startTime={active.startTime} />
           <span style={{ color: 'var(--border)' }}>·</span>
           <span className="forge-label">{completedSets}/{totalSets} sets done</span>
+          <button
+            onClick={() => setShowWorkoutTimer(true)}
+            title="Workout Timer"
+            style={{ marginLeft: 'auto', background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', cursor: 'pointer', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12 7 12 12 15 15" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -1226,6 +1213,9 @@ function ActiveWorkoutView({
 
       {showPicker && (
         <ExercisePicker onSelect={onAddExercise} onClose={() => setShowPicker(false)} />
+      )}
+      {showWorkoutTimer && (
+        <WorkoutTimerModal onClose={() => setShowWorkoutTimer(false)} />
       )}
     </div>
   );
