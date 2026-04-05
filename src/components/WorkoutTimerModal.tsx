@@ -388,7 +388,7 @@ export default function WorkoutTimerModal({ onClose }: { onClose: () => void }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]"
       style={{ background: 'rgba(0,0,0,0.82)' }}
       onClick={onClose}
     >
