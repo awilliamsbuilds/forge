@@ -105,21 +105,40 @@ function SimpleTimer() {
 
   const done = state === 'done';
 
+  const adjustBtn = (label: string, onClick: () => void) => (
+    <button onClick={onClick} style={{
+      background: 'none', border: 'none', color: 'var(--dim)', cursor: 'pointer',
+      fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', padding: '0.5rem 0.25rem',
+      flexShrink: 0, width: '44px',
+    }}
+      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+      onMouseLeave={e => (e.currentTarget.style.color = 'var(--dim)')}
+    >{label}</button>
+  );
+
+  const onAdjust = (delta: number) => state === 'idle'
+    ? selectPreset(Math.max(15, duration + delta))
+    : adjust(delta);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
-      {/* Ring */}
-      <div style={{ position: 'relative' }}>
-        <Ring remaining={remaining} total={duration} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '2.4rem', fontWeight: 700, color: done ? 'var(--accent)' : 'var(--text)', letterSpacing: '0.04em' }}>
-            {fmt(remaining)}
-          </div>
-          {done && (
-            <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.15em', color: 'var(--accent)' }}>
-              DONE
+      {/* Ring flanked by ±15s buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {adjustBtn('−15s', () => onAdjust(-15))}
+        <div style={{ position: 'relative' }}>
+          <Ring remaining={remaining} total={duration} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}>
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '2.4rem', fontWeight: 700, color: done ? 'var(--accent)' : 'var(--text)', letterSpacing: '0.04em' }}>
+              {fmt(remaining)}
             </div>
-          )}
+            {done && (
+              <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.15em', color: 'var(--accent)' }}>
+                DONE
+              </div>
+            )}
+          </div>
         </div>
+        {adjustBtn('+15s', () => onAdjust(15))}
       </div>
 
       {/* Presets — only when idle */}
@@ -144,20 +163,6 @@ function SimpleTimer() {
         </div>
       )}
 
-      {/* Custom adjust — only when idle */}
-      {state === 'idle' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => selectPreset(Math.max(15, duration - 15))}
-            style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.6rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem' }}>
-            −15s
-          </button>
-          <button onClick={() => selectPreset(duration + 15)}
-            style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.6rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem' }}>
-            +15s
-          </button>
-        </div>
-      )}
-
       {/* Action button */}
       {state === 'idle' && (
         <button className="btn-accent w-full py-3" onClick={start} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
@@ -165,21 +170,9 @@ function SimpleTimer() {
         </button>
       )}
       {state === 'running' && (
-        <>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button onClick={() => adjust(-15)}
-              style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.9rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', flex: 1 }}>
-              −15s
-            </button>
-            <button onClick={() => adjust(15)}
-              style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.9rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', flex: 1 }}>
-              +15s
-            </button>
-          </div>
-          <button className="btn-ghost w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
-            STOP
-          </button>
-        </>
+        <button className="btn-ghost w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
+          STOP
+        </button>
       )}
       {state === 'done' && (
         <button className="btn-accent w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
