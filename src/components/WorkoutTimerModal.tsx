@@ -37,7 +37,7 @@ function Stepper({ label, value, onChange, min = 1, step = 1, format }: {
           {label}
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button
           onClick={() => onChange(Math.max(min, value - step))}
           style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', width: 28, height: 28, cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
