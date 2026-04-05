@@ -54,7 +54,7 @@ function Stepper({ label, value, onChange, min = 1, step = 1, format }: {
 
 // ── Simple timer ──────────────────────────────────────────────────────────────
 
-const PRESETS = [30, 60, 90, 120, 180, 300];
+const PRESETS = [30, 60, 90, 120, 180];
 
 function SimpleTimer() {
   const [duration, setDuration]     = useState(60);
