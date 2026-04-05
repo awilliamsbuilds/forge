@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Workout, MuscleGroup, ExerciseProgress } from '../types';
 import LineChart from './ui/LineChart';
 
@@ -137,11 +137,13 @@ function ConsistencyHeatmap({ workouts }: { workouts: Workout[] }) {
   }, [trainedDays]);
 
   const hoveredNames = hovered ? dayWorkoutNames.get(hovered) : null;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth; }, []);
 
   return (
     <div className="forge-card p-4 sm:p-5 mb-5">
       <div className="forge-label mb-3">52-Week Consistency</div>
-      <div style={{ overflowX: 'auto' }}>
+      <div ref={scrollRef} style={{ overflowX: 'auto' }}>
         <svg width={SVG_W} height={SVG_H} style={{ display: 'block' }}>
           {monthLabels.map((m, i) => (
             <text key={i} x={m.x} y={LABEL_H - 2} fontSize="8" fill="#4A4A4A" fontFamily="Space Mono, monospace">
