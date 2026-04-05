@@ -1,0 +1,86 @@
+name: Forge AI Agent
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  agent:
+    # Only run when the forge-agent label is added
+    if: github.event.label.name == 'forge-agent'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Pull Slack thread info and clean message out of the issue body
+      - name: Parse issue body
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+            const channelMatch = body.match(/SLACK_CHANNEL: (\S+)/);
+            const threadMatch  = body.match(/SLACK_THREAD_TS: (\S+)/);
+            const parts   = body.split(/---+\n/);
+            const message = (parts.length > 1 ? parts[parts.length - 1] : body).trim();
+            core.setOutput('channel',   channelMatch?.[1] || '');
+            core.setOutput('thread_ts', threadMatch?.[1]  || '');
+            core.setOutput('message',   message);
+
+      - name: Run Claude Code agent
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          branch_prefix: "forge/"
+          prompt: |
+            You are working on FORGE, a fitness tracker app (React + TypeScript + Vite + Tailwind CSS).
+            Read CLAUDE.md first — it has the full project context, architecture rules, and CSS classes.
+
+            A user reported the following via Slack:
+
+            ${{ steps.parse.outputs.message }}
+
+            Implement the fix or improvement. Rules:
+            - Make focused changes only — do not refactor unrelated code or add unrequested features
+            - Run `npm run build` to verify your changes compile before finishing
+            - Do not create a PR — just commit to the branch
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Checkout Claude's branch and build
+        run: |
+          git fetch origin
+          git checkout ${{ steps.claude.outputs.branch_name }}
+          npm ci
+          npm run build
+
+      - name: Install Playwright
+        run: npm install playwright --no-save && npx playwright install chromium --with-deps
+
+      - name: Take screenshots
+        run: |
+          npx serve dist -l 3001 &
+          sleep 3
+          node .github/scripts/take-screenshot.mjs
+
+      - name: Post results to Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL:   ${{ steps.parse.outputs.channel }}
+          SLACK_THREAD_TS: ${{ steps.parse.outputs.thread_ts }}
+          BRANCH_NAME:     ${{ steps.claude.outputs.branch_name }}
+          ISSUE_URL:       ${{ github.event.issue.html_url }}
+          REPO:            ${{ github.repository }}
+        run: node .github/scripts/post-to-slack.mjs
