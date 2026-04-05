@@ -215,9 +215,18 @@ function IntervalTimer() {
         playChime();
 
         if (phase === 'hold') {
-          // Move to rest
-          iRef.current = { phase: 'rest', rep, startedAt: Date.now(), chimed: false };
-          setDisplay({ phase: 'rest', rep, remaining: restSecs });
+          if (restSecs === 0) {
+            // No rest — go straight to next hold
+            if (rep < reps) {
+              iRef.current = { phase: 'hold', rep: rep + 1, startedAt: Date.now(), chimed: false };
+              setDisplay({ phase: 'hold', rep: rep + 1, remaining: holdSecs });
+            } else {
+              setIState('done');
+            }
+          } else {
+            iRef.current = { phase: 'rest', rep, startedAt: Date.now(), chimed: false };
+            setDisplay({ phase: 'rest', rep, remaining: restSecs });
+          }
         } else {
           // Rest done
           if (rep < reps) {
@@ -242,8 +251,17 @@ function IntervalTimer() {
     const { phase, rep } = iRef.current;
     playChime();
     if (phase === 'hold') {
-      iRef.current = { phase: 'rest', rep, startedAt: Date.now(), chimed: false };
-      setDisplay({ phase: 'rest', rep, remaining: restSecs });
+      if (restSecs === 0) {
+        if (rep < reps) {
+          iRef.current = { phase: 'hold', rep: rep + 1, startedAt: Date.now(), chimed: false };
+          setDisplay({ phase: 'hold', rep: rep + 1, remaining: holdSecs });
+        } else {
+          setIState('done');
+        }
+      } else {
+        iRef.current = { phase: 'rest', rep, startedAt: Date.now(), chimed: false };
+        setDisplay({ phase: 'rest', rep, remaining: restSecs });
+      }
     } else {
       if (rep < reps) {
         iRef.current = { phase: 'hold', rep: rep + 1, startedAt: Date.now(), chimed: false };
@@ -268,7 +286,7 @@ function IntervalTimer() {
         <div style={{ display: 'flex', gap: '0.25rem' }}>
           <Stepper label="Reps" value={reps} onChange={setReps} min={1} />
           <Stepper label="Hold" value={holdSecs} onChange={setHoldSecs} min={5} step={5} format={fmt} />
-          <Stepper label="Rest" value={restSecs} onChange={setRestSecs} min={5} step={5} format={fmt} />
+          <Stepper label="Rest" value={restSecs} onChange={setRestSecs} min={0} step={5} format={fmt} />
         </div>
         <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '0.8rem', color: 'var(--muted)', textAlign: 'center' }}>
           {reps} reps · {fmt(holdSecs)} hold · {fmt(restSecs)} rest · {fmt(reps * (holdSecs + restSecs))} total
