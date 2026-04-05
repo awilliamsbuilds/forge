@@ -90,6 +90,12 @@ function SimpleTimer() {
     setStartedAt(null);
   };
 
+  const adjust = (delta: number) => {
+    chimed.current = false;
+    setDuration(d => Math.max(15, d + delta));
+    if (state === 'done') setState('running');
+  };
+
   const selectPreset = (s: number) => {
     setDuration(s);
     setRemaining(s);
@@ -159,9 +165,21 @@ function SimpleTimer() {
         </button>
       )}
       {state === 'running' && (
-        <button className="btn-ghost w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
-          STOP
-        </button>
+        <>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button onClick={() => adjust(-15)}
+              style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.9rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', flex: 1 }}>
+              −15s
+            </button>
+            <button onClick={() => adjust(15)}
+              style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--dim)', padding: '0.3rem 0.9rem', cursor: 'pointer', fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', flex: 1 }}>
+              +15s
+            </button>
+          </div>
+          <button className="btn-ghost w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
+            STOP
+          </button>
+        </>
       )}
       {state === 'done' && (
         <button className="btn-accent w-full py-3" onClick={stop} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
