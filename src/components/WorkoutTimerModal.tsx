@@ -31,10 +31,12 @@ function Stepper({ label, value, onChange, min = 1, step = 1, format }: {
 }) {
   const display = format ? format(value) : String(value);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-      <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>
-        {label}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', flex: label ? 1 : undefined }}>
+      {label && (
+        <div style={{ fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase' }}>
+          {label}
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
         <button
           onClick={() => onChange(Math.max(min, value - step))}
@@ -281,15 +283,32 @@ function IntervalTimer() {
   const phaseDur = isHold ? holdSecs : restSecs;
 
   if (iState === 'setup') {
+    const rowStyle: React.CSSProperties = {
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0.6rem 0', borderBottom: '1px solid var(--border)',
+    };
+    const labelStyle: React.CSSProperties = {
+      fontFamily: 'Barlow Condensed, sans-serif', fontWeight: 700,
+      fontSize: '0.8rem', letterSpacing: '0.12em', color: 'var(--muted)', textTransform: 'uppercase',
+    };
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          <Stepper label="Reps" value={reps} onChange={setReps} min={1} />
-          <Stepper label="Hold" value={holdSecs} onChange={setHoldSecs} min={5} step={5} format={fmt} />
-          <Stepper label="Rest" value={restSecs} onChange={setRestSecs} min={0} step={5} format={fmt} />
+        <div>
+          <div style={rowStyle}>
+            <span style={labelStyle}>Reps</span>
+            <Stepper label="" value={reps} onChange={setReps} min={1} />
+          </div>
+          <div style={rowStyle}>
+            <span style={labelStyle}>Hold</span>
+            <Stepper label="" value={holdSecs} onChange={setHoldSecs} min={5} step={5} format={fmt} />
+          </div>
+          <div style={{ ...rowStyle, borderBottom: 'none' }}>
+            <span style={labelStyle}>Rest</span>
+            <Stepper label="" value={restSecs} onChange={setRestSecs} min={0} step={5} format={fmt} />
+          </div>
         </div>
-        <div style={{ fontFamily: 'Barlow, sans-serif', fontSize: '0.8rem', color: 'var(--muted)', textAlign: 'center' }}>
-          {reps} reps · {fmt(holdSecs)} hold · {fmt(restSecs)} rest · {fmt(reps * (holdSecs + restSecs))} total
+        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', color: 'var(--dim)', textAlign: 'center' }}>
+          {fmt(reps * (holdSecs + restSecs))} total
         </div>
         <button className="btn-accent w-full py-3" onClick={start} style={{ fontSize: '0.85rem', letterSpacing: '0.1em' }}>
           START
