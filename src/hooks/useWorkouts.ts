@@ -76,36 +76,24 @@ export const useWorkouts = () => {
 
   // ── Server hydration (runs once on mount) ────────────────────────────────
   useEffect(() => {
-    console.log('[FORGE] Starting server hydration…');
     Promise.all([
       loadFromServer<Workout[]>(WORKOUTS_KEY),
       loadFromServer<WorkoutTemplate[]>(TEMPLATES_KEY),
       loadFromServer<ActiveWorkout | null>(ACTIVE_KEY),
     ]).then(([w, t, a]) => {
-      console.log('[FORGE] Server hydration result:', {
-        workouts: w.found ? `${(w.value as Workout[])?.length ?? 0} items` : 'not found',
-        templates: t.found ? `${(t.value as WorkoutTemplate[])?.length ?? 0} items` : 'not found',
-        active: a.found ? (a.value ? 'active' : 'null') : 'not found',
-      });
       if (w.found && w.value) {
         save(WORKOUTS_KEY, w.value);
         setWorkoutsRaw(w.value);
       } else {
         const local = load<Workout[]>(WORKOUTS_KEY, []);
-        if (local.length > 0) {
-          console.log('[FORGE] Pushing local workouts to server:', local.length);
-          saveToServer(WORKOUTS_KEY, local);
-        }
+        if (local.length > 0) saveToServer(WORKOUTS_KEY, local);
       }
       if (t.found && t.value) {
         save(TEMPLATES_KEY, t.value);
         setTemplatesRaw(t.value);
       } else {
         const local = load<WorkoutTemplate[]>(TEMPLATES_KEY, []);
-        if (local.length > 0) {
-          console.log('[FORGE] Pushing local templates to server:', local.length);
-          saveToServer(TEMPLATES_KEY, local);
-        }
+        if (local.length > 0) saveToServer(TEMPLATES_KEY, local);
       }
       if (a.found) {
         if (a.value) {
@@ -116,9 +104,7 @@ export const useWorkouts = () => {
           setActiveRaw(null);
         }
       }
-    }).catch(err => {
-      console.error('[FORGE] Server hydration failed:', err);
-    });
+    }).catch(() => { /* network unavailable — localStorage already shown */ });
   }, []);
 
   // ── Workout lifecycle ──────────────────────────────────────────────────────
