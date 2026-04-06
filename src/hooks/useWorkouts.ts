@@ -90,10 +90,22 @@ export const useWorkouts = () => {
       if (w.found && w.value) {
         save(WORKOUTS_KEY, w.value);
         setWorkoutsRaw(w.value);
+      } else {
+        const local = load<Workout[]>(WORKOUTS_KEY, []);
+        if (local.length > 0) {
+          console.log('[FORGE] Pushing local workouts to server:', local.length);
+          saveToServer(WORKOUTS_KEY, local);
+        }
       }
       if (t.found && t.value) {
         save(TEMPLATES_KEY, t.value);
         setTemplatesRaw(t.value);
+      } else {
+        const local = load<WorkoutTemplate[]>(TEMPLATES_KEY, []);
+        if (local.length > 0) {
+          console.log('[FORGE] Pushing local templates to server:', local.length);
+          saveToServer(TEMPLATES_KEY, local);
+        }
       }
       if (a.found) {
         if (a.value) {
