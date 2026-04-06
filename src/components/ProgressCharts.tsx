@@ -9,14 +9,17 @@ interface ProgressProps {
 }
 
 type Range = '30d' | '90d' | 'all';
-type ExerciseTab = 'all' | 'push' | 'pull' | 'legs' | 'arms';
+type ExerciseTab = 'all' | MuscleGroup;
 
 const TAB_CATEGORIES: Record<ExerciseTab, MuscleGroup[]> = {
-  all:  ['chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'cardio'],
-  push: ['chest', 'shoulders'],
-  pull: ['back'],
-  legs: ['legs', 'core'],
-  arms: ['arms'],
+  all:       ['chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'cardio'],
+  chest:     ['chest'],
+  back:      ['back'],
+  shoulders: ['shoulders'],
+  arms:      ['arms'],
+  legs:      ['legs'],
+  core:      ['core'],
+  cardio:    ['cardio'],
 };
 
 interface SessionData {
@@ -331,6 +334,13 @@ function ExerciseDetail({ exerciseId, workouts, range }: {
   const sessions = useMemo(() => filterByRange(allSessions, range), [allSessions, range]);
   const trend = useMemo(() => computeTrend(allSessions), [allSessions]);
   const allTimeBest = Math.max(0, ...allSessions.map(s => s.e1rm));
+  const totalWeight = useMemo(() => {
+    const raw = workouts.reduce((sum, w) => {
+      const ex = w.exercises.find(e => e.exerciseId === exerciseId);
+      return sum + (ex ? ex.sets.reduce((a, s) => a + s.weight * s.reps, 0) : 0);
+    }, 0);
+    return raw >= 1_000_000 ? `${(raw / 1_000_000).toFixed(1)}M` : raw >= 1_000 ? `${(raw / 1_000).toFixed(1)}K` : raw.toString();
+  }, [workouts, exerciseId]);
   const lastFive = allSessions.slice(-5).reverse();
   const e1rmData = sessions.map(s => ({ x: s.date, y: s.e1rm }));
 
@@ -351,8 +361,8 @@ function ExerciseDetail({ exerciseId, workouts, range }: {
           <div className="forge-stat text-lg sm:text-xl">{allTimeBest > 0 ? `${allTimeBest} lbs` : '—'}</div>
         </div>
         <div>
-          <div className="forge-label mb-1">Sessions</div>
-          <div className="forge-stat text-lg sm:text-xl">{allSessions.length}</div>
+          <div className="forge-label mb-1">Total Lifted</div>
+          <div className="forge-stat text-lg sm:text-xl">{totalWeight}</div>
         </div>
         <div>
           <div className="forge-label mb-1">30d Trend</div>
@@ -379,7 +389,10 @@ function ExerciseDetail({ exerciseId, workouts, range }: {
       {/* Last 5 sessions table */}
       {lastFive.length > 0 && (
         <div className="mt-5">
-          <div className="forge-label mb-2">Last {lastFive.length} Sessions</div>
+          <div className="forge-label mb-2" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Last {lastFive.length} Sessions</span>
+            <span style={{ color: 'var(--dim)' }}>{allSessions.length} total</span>
+          </div>
           <table className="forge-table w-full">
             <thead>
               <tr>
@@ -392,16 +405,16 @@ function ExerciseDetail({ exerciseId, workouts, range }: {
             <tbody>
               {lastFive.map((s, i) => (
                 <tr key={i}>
-                  <td style={{ color: 'var(--dim)', fontFamily: 'Space Mono, monospace', fontSize: '0.72rem' }}>
-                    {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                  <td style={{ color: 'var(--dim)', fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+                    {new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
-                  <td style={{ color: 'var(--muted)', fontFamily: 'Space Mono, monospace', fontSize: '0.72rem' }}>
+                  <td style={{ color: 'var(--muted)', fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                     {s.totalSets}
                   </td>
-                  <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'var(--text)' }}>
+                  <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'var(--text)', whiteSpace: 'nowrap' }}>
                     {s.topSetWeight > 0 ? `${s.topSetWeight} × ${s.topSetReps}` : '—'}
                   </td>
-                  <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 700 }}>
+                  <td style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'var(--accent)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                     {s.e1rm > 0 ? `${s.e1rm} lbs` : '—'}
                   </td>
                 </tr>
@@ -535,7 +548,7 @@ export default function ProgressCharts({ workouts }: ProgressProps) {
 
           {/* Category tabs */}
           <div className="flex gap-1 mb-4 flex-wrap">
-            {(['all', 'push', 'pull', 'legs', 'arms'] as ExerciseTab[]).map(t => (
+            {(['all', 'chest', 'back', 'shoulders', 'arms', 'legs', 'core', 'cardio'] as ExerciseTab[]).map(t => (
               <button
                 key={t}
                 onClick={() => { setTab(t); setSelectedId(''); }}
