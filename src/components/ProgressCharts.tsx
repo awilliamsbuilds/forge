@@ -211,7 +211,8 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
     const allBars = Array.from(map.entries())
       .map(([label, value]) => ({ label, value: Math.round(value) }))
       .reverse(); // workouts stored newest-first; reverse so oldest→newest (left→right)
-    const bars = range === 'all' ? allBars : allBars.slice(-16);
+    const limit = range === '30d' ? 6 : range === '90d' ? 13 : 26;
+    const bars = allBars.slice(-limit);
 
     const WINDOW = 4;
     const rollingAvg = bars.map((_, i) => {
@@ -249,8 +250,9 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
         {bars.map((d, i) => {
           const barH = (d.value / max) * 140;
           const segW = VBW / bars.length;
-          const x = i * segW + 4;
-          const w = segW - 8;
+          const pad = Math.min(4, segW * 0.15);
+          const x = i * segW + pad;
+          const w = segW - pad * 2;
           const y = BOTTOM - barH;
           const isH = hovered === i;
           const labelStride = bars.length > 24 ? 4 : bars.length > 12 ? 2 : 1;
