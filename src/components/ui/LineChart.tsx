@@ -185,7 +185,7 @@ export default function LineChart({
           const d = data[hovered];
           const tipW = 90;
           const tipX = Math.min(Math.max(p.x - tipW / 2, PAD.left), PAD.left + PLOT_W - tipW);
-          const tipY = p.y - 42;
+          const tipY = p.y - 42 < PAD.top ? p.y + 10 : p.y - 42;
           return (
             <g>
               <line

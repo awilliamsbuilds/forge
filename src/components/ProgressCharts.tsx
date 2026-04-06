@@ -197,6 +197,15 @@ function ConsistencyHeatmap({ workouts }: { workouts: Workout[] }) {
 
 function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Range }) {
   const [hovered, setHovered] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState(400);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const { bars, rollingAvg } = useMemo(() => {
     const cutoff = range === 'all' ? 0 : Date.now() - (range === '30d' ? 30 : 90) * 86400000;
@@ -235,7 +244,7 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
     );
   }
 
-  const VBW = 400;
+  const VBW = containerW || 400;
   const VBH = 180;
   const BOTTOM = 155;
   const max = Math.max(...bars.map(d => d.value), 1);
@@ -248,8 +257,8 @@ function WeeklyVolumeChart({ workouts, range }: { workouts: Workout[]; range: Ra
   }).join(' ');
 
   return (
-    <div style={{ height: 180 }} className="w-full">
-      <svg viewBox={`0 0 ${VBW} ${VBH}`} preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+    <div ref={containerRef} style={{ height: 180 }} className="w-full">
+      <svg width={VBW} height={VBH}>
         {bars.map((d, i) => {
           const barH = (d.value / max) * 140;
           const segW = VBW / bars.length;
