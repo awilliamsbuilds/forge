@@ -76,11 +76,17 @@ export const useWorkouts = () => {
 
   // ── Server hydration (runs once on mount) ────────────────────────────────
   useEffect(() => {
+    console.log('[FORGE] Starting server hydration…');
     Promise.all([
       loadFromServer<Workout[]>(WORKOUTS_KEY),
       loadFromServer<WorkoutTemplate[]>(TEMPLATES_KEY),
       loadFromServer<ActiveWorkout | null>(ACTIVE_KEY),
     ]).then(([w, t, a]) => {
+      console.log('[FORGE] Server hydration result:', {
+        workouts: w.found ? `${(w.value as Workout[])?.length ?? 0} items` : 'not found',
+        templates: t.found ? `${(t.value as WorkoutTemplate[])?.length ?? 0} items` : 'not found',
+        active: a.found ? (a.value ? 'active' : 'null') : 'not found',
+      });
       if (w.found && w.value) {
         save(WORKOUTS_KEY, w.value);
         setWorkoutsRaw(w.value);
@@ -98,6 +104,8 @@ export const useWorkouts = () => {
           setActiveRaw(null);
         }
       }
+    }).catch(err => {
+      console.error('[FORGE] Server hydration failed:', err);
     });
   }, []);
 

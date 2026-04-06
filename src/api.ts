@@ -5,10 +5,12 @@ type ServerResult<T> = { found: true; value: T } | { found: false; value: null }
 export async function loadFromServer<T>(key: string): Promise<ServerResult<T>> {
   try {
     const res = await fetch(`/api/store/${key}`);
+    console.log(`[FORGE] GET /api/store/${key} →`, res.status);
     if (res.status === 404) return { found: false, value: null };
     const value = await res.json() as T;
     return { found: true, value };
-  } catch {
+  } catch (err) {
+    console.error(`[FORGE] fetch /api/store/${key} failed:`, err);
     return { found: false, value: null };
   }
 }
