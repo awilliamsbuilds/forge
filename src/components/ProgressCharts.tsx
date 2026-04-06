@@ -450,13 +450,19 @@ export default function ProgressCharts({ workouts }: ProgressProps) {
   }, [tabExercises, workouts]);
 
   // Summary stats
-  const { totalSessions, uniqueDays, avgPerWeek } = useMemo(() => {
+  const { totalSessions, totalWeight, avgPerWeek } = useMemo(() => {
     const totalSessions = workouts.length;
-    const uniqueDays = new Set(workouts.map(w => w.date.slice(0, 10))).size;
-    if (totalSessions === 0) return { totalSessions: 0, uniqueDays: 0, avgPerWeek: 0 };
+    const rawWeight = workouts.reduce((sum, w) =>
+      sum + w.exercises.reduce((a, ex) => a + ex.sets.reduce((b, s) => b + s.weight * s.reps, 0), 0), 0);
+    const totalWeight = rawWeight >= 1_000_000
+      ? `${(rawWeight / 1_000_000).toFixed(1)}M`
+      : rawWeight >= 1_000
+      ? `${(rawWeight / 1_000).toFixed(0)}K`
+      : rawWeight.toString();
+    if (totalSessions === 0) return { totalSessions: 0, totalWeight: '0', avgPerWeek: 0 };
     const oldest = workouts[workouts.length - 1]?.date;
     const weeks = Math.max(1, (Date.now() - new Date(oldest).getTime()) / (7 * 86400000));
-    return { totalSessions, uniqueDays, avgPerWeek: +(totalSessions / weeks).toFixed(1) };
+    return { totalSessions, totalWeight, avgPerWeek: +(totalSessions / weeks).toFixed(1) };
   }, [workouts]);
 
   if (workouts.length === 0) {
@@ -491,7 +497,7 @@ export default function ProgressCharts({ workouts }: ProgressProps) {
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           { label: 'Total Sessions', value: totalSessions.toLocaleString() },
-          { label: 'Training Days', value: uniqueDays.toLocaleString() },
+          { label: 'Total Weight', value: totalWeight },
           { label: 'Avg / Week', value: avgPerWeek.toString() },
         ].map(s => (
           <div key={s.label} className="forge-card p-3 sm:p-4">
