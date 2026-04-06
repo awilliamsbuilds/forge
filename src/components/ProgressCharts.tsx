@@ -301,7 +301,7 @@ function RangeButtons({ range, setRange }: { range: Range; setRange: (r: Range) 
           color: range === r ? 'var(--accent)' : 'var(--muted)',
           cursor: 'pointer',
         }}>
-          {r === 'all' ? 'All' : r}
+          {r === 'all' ? '6mo' : r}
         </button>
       ))}
     </div>
